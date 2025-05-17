@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Đăng nhập{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-12">
+            <div class="card shadow-lg rounded-4 border-0">
+                <div class="card-header bg-viettel text-white py-4 px-5 rounded-top-4 text-center">
+                    <h2 class="mb-0 fw-bold">Đăng nhập</h2>
+                </div>
+                <div class="card-body p-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-4">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in field.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if field.id_for_label == "id_password" %}
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="show-{{ field.id_for_label }}" onchange="togglePassword('{{ field.id_for_label }}')">
+                                        <label class="form-check-label" for="show-{{ field.id_for_label }}">Hiển thị mật khẩu</label>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-viettel w-100 py-3">Đăng nhập</button>
+                    </form>
+                    <div class="text-center mt-4">
+                        <p>Chưa có tài khoản? <a href="{% url 'register' %}" class="text-viettel">Đăng ký</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+
+        const firstField = form.querySelector('input:not([type="hidden"]), select, textarea');
+        if (firstField) {
+            setTimeout(() => {
+                firstField.focus();
+            }, 500);
+        }
+    });
+
+    function togglePassword(fieldId) {
+        const passwordField = document.getElementById(fieldId);
+        const checkbox = document.getElementById('show-' + fieldId);
+        if (checkbox.checked) {
+            passwordField.type = 'text';
+        } else {
+            passwordField.type = 'password';
+        }
+    }
+</script>
+{% endblock %}

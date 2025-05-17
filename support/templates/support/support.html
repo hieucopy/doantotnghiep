@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Hỗ trợ{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Hỗ trợ</li>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Hỗ trợ người dùng</h2>
+        <div class="row">
+            <!-- Nút gửi yêu cầu hỗ trợ -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-plus-circle app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Gửi yêu cầu hỗ trợ</h5>
+                        <p class="text-muted">Gửi yêu cầu nếu bạn gặp vấn đề cần hỗ trợ.</p>
+                        <a href="{% url 'support_create_ticket' %}" class="btn btn-viettel">Gửi ngay</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Xem yêu cầu hỗ trợ -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-list-ul app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Yêu cầu của bạn</h5>
+                        <p class="text-muted">Xem danh sách các yêu cầu hỗ trợ đã gửi.</p>
+                        <a href="{% url 'support_ticket_list' %}" class="btn btn-viettel">Xem ngay</a>
+                    </div>
+                </div>
+            </div>
+            <!-- FAQ -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-question-circle app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Câu hỏi thường gặp</h5>
+                        <p class="text-muted">Tìm câu trả lời cho các vấn đề phổ biến.</p>
+                        <a href="{% url 'support_faq' %}" class="btn btn-viettel">Xem FAQ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

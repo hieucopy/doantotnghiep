@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dịch vụ{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Dịch vụ</li>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12 col-sm-12">
+            <div class="card shadow-lg rounded-4 border-0">
+                <div class="card-header bg-viettel text-white py-4 px-5 rounded-top-4">
+                    <h2 class="mb-0 fw-bold">Dịch vụ</h2>
+                </div>
+                <div class="card-body p-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Hiển thị khuyến mãi -->
+                    {% if promotions %}
+                        <div class="mb-4">
+                            <h4>Khuyến mãi đang áp dụng</h4>
+                            <div class="row">
+                                {% for promotion in promotions %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card shadow-sm">
+                                            <div class="card-body">
+                                                <h5 class="text-viettel fw-bold">{{ promotion.title }}</h5>
+                                                <p>{{ promotion.description }}</p>
+                                                <p><strong>Giảm giá:</strong> {{ promotion.discount_percentage }}%</p>
+                                                <p><strong>Hiệu lực:</strong> {{ promotion.start_date }} - {{ promotion.end_date }}</p>
+                                                <p><strong>Áp dụng cho:</strong>
+                                                    {% for plan in promotion.service_plans.all %}
+                                                        {{ plan.name }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Bộ lọc gói cước -->
+                    <div class="mb-4">
+                        <h4>Lọc gói cước</h4>
+                        <form method="get" class="d-flex flex-wrap gap-3">
+                            <select name="plan_type" class="form-select w-auto" onchange="this.form.submit()">
+                                <option value="">Tất cả loại gói</option>
+                                <option value="DATA" {% if request.GET.plan_type == 'DATA' %}selected{% endif %}>Data</option>
+                                <option value="VOICE" {% if request.GET.plan_type == 'VOICE' %}selected{% endif %}>Thoại</option>
+                                <option value="SMS" {% if request.GET.plan_type == 'SMS' %}selected{% endif %}>SMS</option>
+                                <option value="COMBO" {% if request.GET.plan_type == 'COMBO' %}selected{% endif %}>Combo</option>
+                            </select>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" {% if request.GET.is_active %}checked{% endif %} onchange="this.form.submit()">
+                                <label class="form-check-label" for="is_active">Chỉ hiển thị gói đang hoạt động</label>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Danh sách gói cước -->
+                    <h3>Các gói cước hiện có</h3>
+                    {% if packages %}
+                        <div class="row">
+                            {% for package in packages %}
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100 shadow-sm {% if not package.is_active %}bg-light{% endif %}">
+                                        <div class="card-header bg-viettel text-white">
+                                            <h5 class="mb-0">{{ package.name }}</h5>
+                                            {% if not package.is_active %}
+                                                <span class="badge bg-danger float-end">Ngừng cung cấp</span>
+                                            {% endif %}
+                                            {% with promotion=package.promotions.all|first %}
+                                                {% if promotion and promotion.is_active and promotion.start_date <= now and promotion.end_date >= now %}
+                                                    <span class="badge bg-success float-end me-2">Giảm {{ promotion.discount_percentage }}%</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>Loại gói:</strong> {{ package.get_plan_type_display }}</p>
+                                            <p><strong>Dung lượng data:</strong> {% if package.data_volume %}{{ package.data_volume }} MB{% else %}Không có{% endif %}</p>
+                                            <p><strong>Tốc độ:</strong> {% if package.data_speed %}{{ package.data_speed }}{% else %}Không có{% endif %}</p>
+                                            <p><strong>Phút gọi:</strong> {% if package.voice_minutes %}{{ package.voice_minutes }} phút{% else %}Không có{% endif %}</p>
+                                            <p><strong>Số SMS:</strong> {% if package.sms_count %}{{ package.sms_count }}{% else %}Không có{% endif %}</p>
+                                            <p><strong>Giá:</strong> {{ package.price }} VNĐ</p>
+                                            <p><strong>Thời hạn:</strong> {{ package.duration_days }} ngày</p>
+                                            <!-- Nút xem chi tiết -->
+                                            <button class="btn btn-outline-viettel toggle-details mt-2" data-target="packageDetails{{ package.id }}">Xem chi tiết</button>
+                                            <!-- Phần chi tiết gói cước (ẩn mặc định) -->
+                                            <div id="packageDetails{{ package.id }}" class="package-details mt-3" style="display: none;">
+                                                <hr>
+                                                <p><strong>Mô tả:</strong> {{ package.description }}</p>
+                                                <p><strong>Trạng thái:</strong> {% if package.is_active %}Đang cung cấp{% else %}Ngừng cung cấp{% endif %}</p>
+                                                {% with promotion=package.promotions.all|first %}
+                                                    {% if promotion and promotion.is_active and promotion.start_date <= now and promotion.end_date >= now %}
+                                                        <p><strong>Khuyến mãi:</strong> Giảm {{ promotion.discount_percentage }}% ({{ promotion.title }})</p>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                        </div>
+                                        <div class="card-footer text-center">
+                                            {% if package.is_active %}
+                                                <button class="btn btn-viettel register-package-btn" data-package-id="{{ package.id }}" onclick="registerPackage({{ package.id }})">
+                                                    <span class="btn-text">Đăng ký ngay</span>
+                                                    <span class="btn-loading d-none"><i class="bi bi-arrow-repeat spin"></i> Đang xử lý...</span>
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-secondary" disabled>Không thể đăng ký</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Hiện tại chưa có gói cước nào.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    }
+    .package-details {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .register-package-btn {
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+    .register-package-btn:hover:not(:disabled) {
+        background-color: #c8102e;
+    }
+    .register-package-btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .btn-loading {
+        display: inline-flex;
+        align-items: center;
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .d-none {
+        display: none;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Xử lý sự kiện click để hiển thị/ẩn chi tiết gói cước
+    document.querySelectorAll('.toggle-details').forEach(button => {
+        button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-target');
+            const detailsSection = document.getElementById(targetId);
+            if (detailsSection.style.display === 'none') {
+                detailsSection.style.display = 'block';
+                button.textContent = 'Ẩn chi tiết';
+            } else {
+                detailsSection.style.display = 'none';
+                button.textContent = 'Xem chi tiết';
+            }
+        });
+    });
+
+    // Xử lý đăng ký gói cước qua AJAX với SweetAlert2
+    async function registerPackage(packageId) {
+        // Hiển thị thông báo xác nhận với SweetAlert2
+        const result = await Swal.fire({
+            title: 'Xác nhận đăng ký',
+            text: 'Bạn có chắc chắn muốn đăng ký gói cước này không?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Đăng ký',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (!result.isConfirmed) return;
+
+        const button = document.querySelector(`button[data-package-id="${packageId}"]`);
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+
+        // Vô hiệu hóa nút và hiển thị trạng thái loading
+        button.disabled = true;
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+
+        try {
+            const response = await fetch(`/services/register-service/${packageId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                await Swal.fire({
+                    title: 'Thành công!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'OK'
+                });
+                window.location.href = '{% url "home" %}'; // Chuyển về trang chủ
+            } else {
+                throw new Error(result.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+            }
+        } catch (error) {
+            await Swal.fire({
+                title: 'Lỗi!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            // Khôi phục trạng thái nút
+            button.disabled = false;
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+        }
+    }
+</script>
+{% endblock %}

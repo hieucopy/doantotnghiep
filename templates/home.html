@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Trang chủ{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Trang chủ</li>
+{% endblock %}
+
+{% block content %}
+<!-- Trang chủ cho người dùng đã đăng nhập -->
+<section class="bg-light-viettel py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-viettel animate__animated animate__fadeIn">Xin chào, {{ user.username }}!</h1>
+            <p class="lead text-muted mt-3 animate__animated animate__fadeIn animate__delay-1s">
+                Quản lý dịch vụ viễn thông của bạn một cách dễ dàng.
+            </p>
+            {% if active_usage %}
+                <div class="alert alert-info mt-4 animate__animated animate__fadeIn animate__delay-2s">
+                    <h5 class="mb-1">Gói cước đang sử dụng: {{ active_usage.service_plan.name }}</h5>
+                    <p class="mb-0">
+                        Thời hạn: Hết hạn vào {{ active_usage.end_date|date:"d/m/Y" }}<br>
+                        {% if active_usage.service_plan.data_volume %}
+                            Dữ liệu còn lại: {{ active_usage.remaining_data }} GB<br>
+                        {% endif %}
+                        {% if active_usage.service_plan.voice_minutes %}
+                            Phút gọi còn lại: {{ active_usage.remaining_minutes }} phút<br>
+                        {% endif %}
+                        {% if active_usage.service_plan.sms_count %}
+                            SMS còn lại: {{ active_usage.remaining_sms }}<br>
+                        {% endif %}
+                    </p>
+                    {% if active_usage.end_date|date:"U"|add:"-259200" <= now|date:"U" %}
+                        <div class="alert alert-warning mt-2">
+                            Gói cước của bạn sắp hết hạn vào {{ active_usage.end_date|date:"d/m/Y" }}. Hãy gia hạn ngay!
+                            <a href="{% url 'services' %}" class="btn btn-sm btn-viettel ms-2">Gia hạn</a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning mt-4 animate__animated animate__fadeIn animate__delay-2s">
+                    Bạn chưa đăng ký gói cước nào. Hãy khám phá các gói cước dưới đây!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Các ứng dụng của hệ thống -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5 animate__animated animate__fadeIn">Ứng dụng của bạn</h2>
+        <div class="row">
+            <!-- App: Quản lý gói cước -->
+            <div class="col-md-3 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="card h-100 shadow-sm text-center app-card">
+                    <div class="card-body">
+                        <i class="bi bi-boxes app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Quản lý gói cước</h5>
+                        <p class="text-muted">Xem và đăng ký các gói cước phù hợp với nhu cầu của bạn.</p>
+                        <a href="{% url 'services' %}" class="btn btn-viettel">Truy cập</a>
+                    </div>
+                </div>
+            </div>
+            <!-- App: Lịch sử sử dụng -->
+            <div class="col-md-3 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="card h-100 shadow-sm text-center app-card">
+                    <div class="card-body">
+                        <i class="bi bi-clock-history app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Lịch sử sử dụng</h5>
+                        <p class="text-muted">Xem lịch sử sử dụng dịch vụ của bạn.</p>
+                        <a href="{% url 'usage_history' %}" class="btn btn-viettel">Truy cập</a>
+                    </div>
+                </div>
+            </div>
+            <!-- App: Tài khoản của tôi -->
+            <div class="col-md-3 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="card h-100 shadow-sm text-center app-card">
+                    <div class="card-body">
+                        <i class="bi bi-person-circle app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Tài khoản của tôi</h5>
+                        <p class="text-muted">Xem thông tin tài khoản và lịch sử sử dụng dịch vụ.</p>
+                        <a href="{% url 'profile' %}" class="btn btn-viettel">Truy cập</a>
+                    </div>
+                </div>
+            </div>
+            <!-- App: Quản lý tài khoản -->
+            <div class="col-md-3 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="card h-100 shadow-sm text-center app-card">
+                    <div class="card-body">
+                        <i class="bi bi-wallet2 app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Quản lý tài khoản</h5>
+                        <p class="text-muted">Quản lý số dư và lịch sử giao dịch của bạn.</p>
+                        <a href="{% url 'account_management' %}" class="btn btn-viettel">Truy cập</a>
+                    </div>
+                </div>
+            </div>
+            <!-- App: Kiểm tra lưu lượng còn lại -->
+            <div class="col-md-3 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="card h-100 shadow-sm text-center app-card">
+                    <div class="card-body">
+                        <i class="bi bi-speedometer2 app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Kiểm tra lưu lượng</h5>
+                        <p class="text-muted">Xem lưu lượng còn lại của gói cước hiện tại.</p>
+                        <a href="{% url 'check_usage' %}" class="btn btn-viettel">Truy cập</a>
+                    </div>
+                </div>
+            </div>
+            <!-- App: Hỗ trợ -->
+            <div class="col-md-3 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="card h-100 shadow-sm text-center app-card">
+                    <div class="card-body">
+                        <i class="bi bi-headset app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Hỗ trợ</h5>
+                        <p class="text-muted">Liên hệ với chúng tôi để được hỗ trợ nhanh chóng.</p>
+                        <a href="{% url 'support_home' %}" class="btn btn-viettel">Truy cập</a>
+                    </div>
+                </div>
+            </div>
+            <!-- App: Khuyến mãi -->
+            <div class="col-md-3 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="card h-100 shadow-sm text-center app-card">
+                    <div class="card-body">
+                        <i class="bi bi-gift app-icon mb-3 text-viettel"></i>
+                        <h5 class="text-viettel fw-bold">Khuyến mãi</h5>
+                        <p class="text-muted">Xem các ưu đãi đặc biệt dành riêng cho bạn.</p>
+                        <a href="{% url 'services' %}" class="btn btn-viettel">Truy cập</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Gói cước nổi bật -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5 animate__animated animate__fadeIn">Gói cước nổi bật</h2>
+        <div class="row">
+            {% for package in featured_packages %}
+                <div class="col-md-4 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-viettel text-white">
+                            <h5 class="mb-0">{{ package.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Loại gói:</strong> {{ package.get_plan_type_display }}</p>
+                            <p><strong>Dung lượng data:</strong> {% if package.data_volume %}{{ package.data_volume }} MB{% else %}Không có{% endif %}</p>
+                            <p><strong>Phút gọi:</strong> {% if package.voice_minutes %}{{ package.voice_minutes }} phút{% else %}Không có{% endif %}</p>
+                            <p><strong>Số SMS:</strong> {% if package.sms_count %}{{ package.sms_count }}{% else %}Không có{% endif %}</p>
+                            <p><strong>Giá:</strong> {{ package.price }} VNĐ</p>
+                            <p><strong>Thời hạn:</strong> {{ package.duration_days }} ngày</p>
+                            <p><strong>Mô tả:</strong> {{ package.description }}</p>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button class="btn btn-viettel register-package-btn" data-package-id="{{ package.id }}" onclick="registerPackage({{ package.id }})">
+                                <span class="btn-text">Đăng ký ngay</span>
+                                <span class="btn-loading d-none"><i class="bi bi-arrow-repeat spin"></i> Đang xử lý...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-center text-muted">Hiện tại chưa có gói cước nào.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Ưu đãi đặc biệt -->
+{% if promotions %}
+    <section class="bg-light py-5">
+        <div class="container">
+            <h2 class="text-center fw-bold mb-5 animate__animated animate__fadeIn">Ưu đãi đặc biệt</h2>
+            <div class="row">
+                {% for promotion in promotions %}
+                    <div class="col-md-6 mb-4 animate__animated animate__fadeIn animate__delay-1s">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center">
+                                <h5 class="text-viettel fw-bold">{{ promotion.title }}</h5>
+                                <p>{{ promotion.description }}</p>
+                                <p><strong>Giảm giá:</strong> {{ promotion.discount_percentage }}%</p>
+                                <p><strong>Hiệu lực:</strong> {{ promotion.start_date|date:"d/m/Y" }} - {{ promotion.end_date|date:"d/m/Y" }}</p>
+                                <a href="{% url 'services' %}" class="btn btn-viettel">Xem chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    }
+    .app-icon {
+        font-size: 50px;
+        line-height: 1;
+    }
+    .app-card {
+        background-color: #f8f9fa;
+        border: none;
+    }
+    .register-package-btn {
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+    .register-package-btn:hover:not(:disabled) {
+        background-color: #c8102e;
+    }
+    .register-package-btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .btn-loading {
+        display: inline-flex;
+        align-items: center;
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .d-none {
+        display: none;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    async function registerPackage(packageId) {
+        const button = document.querySelector(`button[data-package-id="${packageId}"]`);
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+
+        const result = await Swal.fire({
+            title: 'Xác nhận đăng ký',
+            text: 'Bạn có chắc chắn muốn đăng ký gói cước này không?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Đăng ký',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (!result.isConfirmed) return;
+
+        button.disabled = true;
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+
+        try {
+            const response = await fetch(`/services/register-service/${packageId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                await Swal.fire({
+                    title: 'Thành công!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'OK'
+                });
+                window.location.reload();
+            } else {
+                throw new Error(result.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+            }
+        } catch (error) {
+            await Swal.fire({
+                title: 'Lỗi!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            button.disabled = false;
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+        }
+    }
+</script>
+{% endblock %}

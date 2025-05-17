@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Kiểm tra lưu lượng còn lại{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Kiểm tra lưu lượng còn lại</li>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12 col-sm-12">
+            <div class="card shadow-lg rounded-4 border-0">
+                <div class="card-header bg-viettel text-white py-4 px-5 rounded-top-4">
+                    <h2 class="mb-0 fw-bold">Kiểm tra lưu lượng còn lại</h2>
+                </div>
+                <div class="card-body p-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% else %}
+                        <div class="row">
+                            <!-- Thông tin sử dụng -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0 text-viettel fw-bold">Thông tin sử dụng</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Dữ liệu đã sử dụng:</strong> {{ data_usage|floatformat:2 }} / {{ max_data|floatformat:2 }} GB</p>
+                                        <p><strong>Phút gọi đã sử dụng:</strong> {{ call_minutes }} / {{ max_minutes }} phút</p>
+                                        <p><strong>Tin nhắn đã sử dụng:</strong> {{ sms_used }} / {{ max_sms }} tin nhắn</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lưu lượng còn lại -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0 text-viettel fw-bold">Lưu lượng còn lại</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Dữ liệu:</strong> {{ remaining_data|floatformat:2 }} GB</p>
+                                        <p><strong>Phút gọi:</strong> {{ remaining_minutes }} phút</p>
+                                        <p><strong>Tin nhắn:</strong> {{ remaining_sms }} tin nhắn</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút giả lập sử dụng -->
+                        <div class="text-center mt-4">
+                            <form method="POST" id="simulateUsageForm">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-viettel simulate-usage-btn">
+                                    <span class="btn-text">Kiểm tra lưu lượng còn lại (Giả lập sử dụng)</span>
+                                    <span class="btn-loading d-none"><i class="bi bi-arrow-repeat spin"></i> Đang xử lý...</span>
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    }
+    .simulate-usage-btn {
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+    .simulate-usage-btn:hover:not(:disabled) {
+        background-color: #c8102e;
+    }
+    .simulate-usage-btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .btn-loading {
+        display: inline-flex;
+        align-items: center;
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .d-none {
+        display: none;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Xử lý form giả lập sử dụng với AJAX và SweetAlert2
+    document.getElementById('simulateUsageForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const button = document.querySelector('.simulate-usage-btn');
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+
+        button.disabled = true;
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+
+        try {
+            const response = await fetch('{% url "check_usage" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            });
+
+            if (response.ok) {
+                window.location.reload(); // Làm mới trang để cập nhật dữ liệu
+            } else {
+                throw new Error('Có lỗi xảy ra khi giả lập sử dụng. Vui lòng thử lại.');
+            }
+        } catch (error) {
+            await Swal.fire({
+                title: 'Lỗi!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            button.disabled = false;
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+        }
+    });
+</script>
+{% endblock %}

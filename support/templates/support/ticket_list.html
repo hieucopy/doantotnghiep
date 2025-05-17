@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Danh sách yêu cầu hỗ trợ{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'support_home' %}">Hỗ trợ</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Danh sách yêu cầu</li>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Danh sách yêu cầu hỗ trợ</h2>
+        {% if tickets %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Chủ đề</th>
+                            <th>Trạng thái</th>
+                            <th>Mức độ ưu tiên</th>
+                            <th>Đánh giá</th>
+                            <th>Ngày gửi</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                            <tr>
+                                <td>{{ ticket.id }}</td>
+                                <td>{{ ticket.subject }}</td>
+                                <td>
+                                    {% if ticket.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Đang xử lý</span>
+                                    {% elif ticket.status == 'RESOLVED' %}
+                                        <span class="badge bg-success">Đã giải quyết</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Đã đóng</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ ticket.get_priority_display }}</td>
+                                <td>
+                                    {% if ticket.rating %}
+                                        {% for i in "12345" %}
+                                            <i class="bi bi-star-fill text-warning" style="font-size: 1rem;"></i>
+                                        {% endfor %}
+                                    {% else %}
+                                        Chưa đánh giá
+                                    {% endif %}
+                                </td>
+                                <td>{{ ticket.created_at|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'support_ticket_detail' ticket.id %}" class="btn btn-sm btn-viettel">Xem chi tiết</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center text-muted">Bạn chưa gửi yêu cầu hỗ trợ nào.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

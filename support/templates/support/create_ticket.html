@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Gửi yêu cầu hỗ trợ{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'support_home' %}">Hỗ trợ</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Gửi yêu cầu</li>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Gửi yêu cầu hỗ trợ</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form id="ticket-form" method="POST">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Chủ đề</label>
+                                <input type="text" class="form-control" id="subject" name="subject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Mô tả vấn đề</label>
+                                <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Mức độ ưu tiên</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="LOW">Thấp</option>
+                                    <option value="MEDIUM" selected>Trung bình</option>
+                                    <option value="HIGH">Cao</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-viettel w-100">Gửi yêu cầu</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('ticket-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                await Swal.fire({
+                    title: 'Thành công!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonColor: '#dc3545',
+                });
+                window.location.href = "{% url 'support_ticket_list' %}";
+            } else {
+                throw new Error(result.message || 'Gửi yêu cầu thất bại.');
+            }
+        } catch (error) {
+            await Swal.fire({
+                title: 'Lỗi!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
+        }
+    });
+</script>
+{% endblock %}

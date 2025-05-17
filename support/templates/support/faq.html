@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Câu hỏi thường gặp{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'support_home' %}">Hỗ trợ</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Câu hỏi thường gặp</li>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Câu hỏi thường gặp</h2>
+        <form class="mb-4" method="GET">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Tìm kiếm FAQ...">
+                <button class="btn btn-viettel" type="submit">Tìm kiếm</button>
+            </div>
+        </form>
+
+        {% if faqs %}
+            {% regroup faqs by category as faq_categories %}
+            {% for category in faq_categories %}
+                <h3 class="mt-5 mb-3 text-viettel">{{ category.grouper|default:"Khác" }}</h3>
+                <div class="accordion" id="faqAccordion{{ forloop.counter }}">
+                    {% for faq in category.list %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ faq.id }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ faq.id }}" aria-expanded="false" aria-controls="collapse{{ faq.id }}">
+                                    {{ faq.question }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ faq.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ faq.id }}" data-bs-parent="#faqAccordion{{ forloop.counter }}">
+                                <div class="accordion-body">
+                                    {{ faq.answer }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-muted">Không tìm thấy câu hỏi nào.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

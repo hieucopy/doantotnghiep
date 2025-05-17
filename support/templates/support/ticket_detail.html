@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết yêu cầu #{{ ticket.id }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'support_home' %}">Hỗ trợ</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'support_ticket_list' %}">Danh sách yêu cầu</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Chi tiết yêu cầu #{{ ticket.id }}</li>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Chi tiết yêu cầu #{{ ticket.id }}</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <p><strong>Chủ đề:</strong> {{ ticket.subject }}</p>
+                        <p><strong>Mô tả vấn đề:</strong> {{ ticket.description }}</p>
+                        <p><strong>Mức độ ưu tiên:</strong> {{ ticket.get_priority_display }}</p>
+                        <p><strong>Trạng thái:</strong>
+                            {% if ticket.status == 'PENDING' %}
+                                <span class="badge bg-warning">Đang xử lý</span>
+                            {% elif ticket.status == 'RESOLVED' %}
+                                <span class="badge bg-success">Đã giải quyết</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Đã đóng</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Ngày gửi:</strong> {{ ticket.created_at|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Cập nhật lần cuối:</strong> {{ ticket.updated_at|date:"d/m/Y H:i" }}</p>
+                        {% if ticket.response %}
+                            <p><strong>Phản hồi:</strong> {{ ticket.response }}</p>
+                        {% else %}
+                            <p><strong>Phản hồi:</strong> Chưa có phản hồi.</p>
+                        {% endif %}
+                        <p><strong>Đánh giá:</strong>
+                            {% if ticket.rating %}
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= ticket.rating %}
+                                        <i class="bi bi-star-fill text-warning" style="font-size: 1rem;"></i>
+                                    {% else %}
+                                        <i class="bi bi-star text-muted" style="font-size: 1rem;"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            {% elif ticket.status == 'RESOLVED' %}
+                                <form id="rating-form" class="d-inline">
+                                    {% csrf_token %}
+                                    <div class="rating">
+                                        {% for i in "54321" %}
+                                            <input type="radio" name="rating" id="star{{ i }}" value="{{ i }}" required>
+                                            <label for="star{{ i }}" class="bi bi-star-fill" style="font-size: 1.5rem; cursor: pointer;"></label>
+                                        {% endfor %}
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-viettel mt-2">Gửi đánh giá</button>
+                                </form>
+                            {% else %}
+                                Chưa thể đánh giá (yêu cầu chưa được giải quyết).
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    .rating {
+        display: inline-flex;
+        direction: rtl;
+    }
+    .rating input {
+        display: none;
+    }
+    .rating label {
+        color: #ddd;
+        transition: color 0.3s;
+    }
+    .rating input:checked ~ label,
+    .rating label:hover,
+    .rating label:hover ~ label {
+        color: #ffc107;
+    }
+</style>
+<script>
+    const ratingForm = document.getElementById('rating-form');
+    if (ratingForm) {
+        ratingForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(ratingForm);
+
+            try {
+                const response = await fetch(`/support/tickets/{{ ticket.id }}/rate/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    await Swal.fire({
+                        title: 'Thành công!',
+                        text: result.message,
+                        icon: 'success',
+                        confirmButtonColor: '#dc3545',
+                    });
+                    window.location.reload();
+                } else {
+                    throw new Error(result.message || 'Gửi đánh giá thất bại.');
+                }
+            } catch (error) {
+                await Swal.fire({
+                    title: 'Lỗi!',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545',
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

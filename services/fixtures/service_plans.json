@@ -1,0 +1,55 @@
+[
+    {
+        "model": "services.serviceplan",
+        "pk": 1,
+        "fields": {
+            "name": "4G 30GB",
+            "plan_type": "DATA",
+            "description": "30GB dữ liệu tốc độ cao trong 30 ngày.",
+            "price": 120000.00,
+            "duration_days": 30,
+            "data_volume": 30000,
+            "is_active": true
+        }
+    },
+    {
+        "model": "services.serviceplan",
+        "pk": 2,
+        "fields": {
+            "name": "Combo 500MB + 500 phút",
+            "plan_type": "COMBO",
+            "description": "500MB data và 500 phút gọi nội mạng.",
+            "price": 70000.00,
+            "duration_days": 30,
+            "data_volume": 500,
+            "voice_minutes": 500,
+            "is_active": true
+        }
+    },
+    {
+        "model": "services.serviceplan",
+        "pk": 3,
+        "fields": {
+            "name": "Thoại 1000 phút",
+            "plan_type": "VOICE",
+            "description": "1000 phút gọi nội mạng trong 30 ngày.",
+            "price": 90000.00,
+            "duration_days": 30,
+            "voice_minutes": 1000,
+            "is_active": true
+        }
+    },
+    {
+        "model": "services.serviceplan",
+        "pk": 4,
+        "fields": {
+            "name": "SMS 500 tin",
+            "plan_type": "SMS",
+            "description": "500 tin nhắn nội mạng trong 30 ngày.",
+            "price": 30000.00,
+            "duration_days": 30,
+            "sms_count": 500,
+            "is_active": true
+        }
+    }
+]

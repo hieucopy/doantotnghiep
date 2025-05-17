@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Hồ sơ người dùng{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-sm-12">
+            <div class="card shadow-lg rounded-4 border-0">
+                <div class="card-header bg-viettel text-white py-4 px-5 rounded-top-4 d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0 fw-bold">Hồ sơ người dùng</h2>
+                    <a href="{% url 'logout' %}" class="btn btn-outline-light">Đăng xuất</a>
+                </div>
+                <div class="card-body p-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Tên đăng nhập</label>
+                            <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Số điện thoại</label>
+                            <input type="text" class="form-control" value="{{ user.phone_number }}" readonly>
+                        </div>
+                        <div class="mb-4">
+                            <label for="email" class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+                        </div>
+                        <div class="mb-4">
+                            <label for="first_name" class="form-label fw-semibold">Họ</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
+                        </div>
+                        <div class="mb-4">
+                            <label for="last_name" class="form-label fw-semibold">Tên</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
+                        </div>
+                        <div class="mb-4">
+                            <label for="address" class="form-label fw-semibold">Địa chỉ</label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ user.address }}">
+                        </div>
+                        {% if profile %}
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Điểm tích lũy</label>
+                            <input type="text" class="form-control" value="{{ profile.loyalty_points }}" readonly>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Ngày đăng ký</label>
+                            <input type="text" class="form-control" value="{{ profile.registration_date }}" readonly>
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-viettel w-100 py-3">Cập nhật</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

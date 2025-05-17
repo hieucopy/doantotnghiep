@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quản lý tài khoản{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Quản lý tài khoản</li>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center fw-bold mb-5 animate__animated animate__fadeIn">Quản lý tài khoản</h2>
+
+    <!-- Số dư tài khoản -->
+    <div class="row mb-5">
+        <div class="col-md-6 offset-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="text-viettel fw-bold">Số dư hiện tại</h5>
+                    <p class="display-6">{{ user_account.balance }} VNĐ</p>
+                    <button class="btn btn-viettel mt-3" data-bs-toggle="modal" data-bs-target="#depositModal">Nạp tiền</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lịch sử giao dịch -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-viettel text-white">
+            <h5 class="mb-0">Lịch sử giao dịch</h5>
+        </div>
+        <div class="card-body">
+            {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ngày giao dịch</th>
+                                <th>Số tiền</th>
+                                <th>Loại giao dịch</th>
+                                <th>Mô tả</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ transaction.amount }} VNĐ</td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'deposit' %}
+                                            <span class="badge bg-success">Nạp tiền</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Thanh toán</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.description }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted">Bạn chưa có giao dịch nào.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal nạp tiền -->
+<div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="depositModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="depositModalLabel">Nạp tiền vào tài khoản</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="depositForm">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Số tiền (VNĐ)</label>
+                        <input type="number" class="form-control" id="amount" name="amount" min="1000" step="1000" required>
+                    </div>
+                    <button type="submit" class="btn btn-viettel w-100 deposit-btn">
+                        <span class="btn-text">Nạp tiền</span>
+                        <span class="btn-loading d-none"><i class="bi bi-arrow-repeat spin"></i> Đang xử lý...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<style>
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .badge {
+        font-size: 0.9em;
+    }
+    .deposit-btn {
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+    .deposit-btn:hover:not(:disabled) {
+        background-color: #c8102e;
+    }
+    .deposit-btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .btn-loading {
+        display: inline-flex;
+        align-items: center;
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .d-none {
+        display: none;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('depositForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const button = document.querySelector('.deposit-btn');
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+        const amount = document.getElementById('amount').value;
+
+        if (!amount || amount <= 0) {
+            Swal.fire({
+                title: 'Lỗi!',
+                text: 'Vui lòng nhập số tiền hợp lệ.',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        button.disabled = true;
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+
+        try {
+            const response = await fetch('/services/deposit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: new URLSearchParams({
+                    'amount': amount
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                await Swal.fire({
+                    title: 'Thành công!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'OK'
+                });
+                window.location.reload();
+            } else {
+                throw new Error(result.message || 'Nạp tiền thất bại. Vui lòng thử lại.');
+            }
+        } catch (error) {
+            await Swal.fire({
+                title: 'Lỗi!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            button.disabled = false;
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+        }
+    });
+</script>
+{% endblock %}
