@@ -1,0 +1,441 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .insights-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .insights-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+
+    .insights-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .model-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .info-card h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+    }
+
+    .metric-grid {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .metric-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 4px;
+    }
+
+    .metric-item strong {
+        color: #2c3e50;
+    }
+
+    .metric-value {
+        font-weight: 600;
+        color: #3498db;
+    }
+
+    .chart-section {
+        margin-top: 2rem;
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    .chart-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .chart-container h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    .feature-importance {
+        margin-top: 2rem;
+    }
+
+    .feature-list {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .feature-bar {
+        flex: 1;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .feature-bar-fill {
+        height: 100%;
+        background: #3498db;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .feature-name {
+        min-width: 150px;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .feature-value {
+        min-width: 60px;
+        text-align: right;
+        color: #666;
+        font-weight: 600;
+    }
+
+    .confusion-matrix {
+        margin-top: 2rem;
+    }
+
+    .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .matrix-table th, .matrix-table td {
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #eee;
+    }
+
+    .matrix-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .matrix-value {
+        font-weight: 600;
+    }
+
+    .matrix-value.true-positive {
+        color: #27ae60;
+    }
+
+    .matrix-value.false-positive {
+        color: #e74c3c;
+    }
+
+    .matrix-value.false-negative {
+        color: #f39c12;
+    }
+
+    .matrix-value.true-negative {
+        color: #3498db;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .insights-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+
+        .chart-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-wrapper {
+            height: 250px;
+        }
+
+        .feature-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .feature-bar {
+            width: 100%;
+        }
+
+        .feature-name, .feature-value {
+            min-width: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="insights-container">
+    <div class="insights-header">
+        <h1>Model Insights</h1>
+        <p>Detailed analysis of model performance and feature importance</p>
+    </div>
+
+    <div class="model-info">
+        <div class="info-card">
+            <h3>Model Performance</h3>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <strong>Accuracy:</strong>
+                    <span class="metric-value">{{ metrics.accuracy|floatformat:3 }}</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Precision:</strong>
+                    <span class="metric-value">{{ metrics.precision|floatformat:3 }}</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Recall:</strong>
+                    <span class="metric-value">{{ metrics.recall|floatformat:3 }}</span>
+                </div>
+                <div class="metric-item">
+                    <strong>F1 Score:</strong>
+                    <span class="metric-value">{{ metrics.f1_score|floatformat:3 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>Model Details</h3>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <strong>Training Date:</strong>
+                    <span class="metric-value">{{ model_info.training_date|date:"d/m/Y" }}</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Test Size:</strong>
+                    <span class="metric-value">{{ model_info.test_size }}</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Number of Estimators:</strong>
+                    <span class="metric-value">{{ model_info.n_estimators }}</span>
+                </div>
+                <div class="metric-item">
+                    <strong>Max Depth:</strong>
+                    <span class="metric-value">{{ model_info.max_depth }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-section">
+        <h3>Model Performance Charts</h3>
+        <div class="chart-grid">
+            <div class="chart-container">
+                <h3>ROC Curve</h3>
+                <div class="chart-wrapper">
+                    <canvas id="rocCurve"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Learning Curves</h3>
+                <div class="chart-wrapper">
+                    <canvas id="learningCurves"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="feature-importance">
+        <h3>Feature Importance</h3>
+        <div class="feature-list">
+            {% for feature in feature_importance %}
+            <div class="feature-item">
+                <span class="feature-name">{{ feature.name }}</span>
+                <div class="feature-bar">
+                    <div class="feature-bar-fill" style="width: {{ feature.importance|floatformat:0 }}%"></div>
+                </div>
+                <span class="feature-value">{{ feature.importance|floatformat:3 }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="confusion-matrix">
+        <h3>Confusion Matrix</h3>
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Predicted Negative</th>
+                    <th>Predicted Positive</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Actual Negative</th>
+                    <td class="matrix-value true-negative">{{ confusion_matrix.tn }}</td>
+                    <td class="matrix-value false-positive">{{ confusion_matrix.fp }}</td>
+                </tr>
+                <tr>
+                    <th>Actual Positive</th>
+                    <td class="matrix-value false-negative">{{ confusion_matrix.fn }}</td>
+                    <td class="matrix-value true-positive">{{ confusion_matrix.tp }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{% url 'admin:index' %}" class="back-link">← Back to Admin Dashboard</a>
+</div>
+
+<script>
+    // ROC Curve
+    const rocCtx = document.getElementById('rocCurve').getContext('2d');
+    new Chart(rocCtx, {
+        type: 'line',
+        data: {
+            labels: {{ roc_curve.fpr|safe }},
+            datasets: [{
+                label: 'ROC Curve',
+                data: {{ roc_curve.tpr|safe }},
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Random',
+                data: {{ roc_curve.random|safe }},
+                borderColor: '#95a5a6',
+                borderDash: [5, 5],
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'False Positive Rate'
+                    },
+                    min: 0,
+                    max: 1
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'True Positive Rate'
+                    },
+                    min: 0,
+                    max: 1
+                }
+            }
+        }
+    });
+
+    // Learning Curves
+    const learningCtx = document.getElementById('learningCurves').getContext('2d');
+    new Chart(learningCtx, {
+        type: 'line',
+        data: {
+            labels: {{ learning_curves.train_sizes|safe }},
+            datasets: [{
+                label: 'Training Score',
+                data: {{ learning_curves.train_scores|safe }},
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                fill: true
+            }, {
+                label: 'Validation Score',
+                data: {{ learning_curves.val_scores|safe }},
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Training Examples'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Score'
+                    },
+                    min: 0,
+                    max: 1
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 

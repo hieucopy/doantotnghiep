@@ -70,10 +70,10 @@
                     </div>
 
                     <!-- Danh sách gói cước -->
-                    <h3>Các gói cước hiện có</h3>
-                    {% if packages %}
+                    {% if packages_with_promotion %}
+                        <h3 class="mb-4">Gói cước đang khuyến mãi</h3>
                         <div class="row">
-                            {% for package in packages %}
+                            {% for package in packages_with_promotion %}
                                 <div class="col-md-4 mb-4">
                                     <div class="card h-100 shadow-sm {% if not package.is_active %}bg-light{% endif %}">
                                         <div class="card-header bg-viettel text-white">
@@ -123,8 +123,45 @@
                                 </div>
                             {% endfor %}
                         </div>
-                    {% else %}
-                        <p class="text-muted">Hiện tại chưa có gói cước nào.</p>
+                    {% endif %}
+
+                    {% if packages_without_promotion %}
+                        <h3 class="mb-4 mt-5">Gói cước thường</h3>
+                        <div class="row">
+                            {% for package in packages_without_promotion %}
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100 shadow-sm {% if not package.is_active %}bg-light{% endif %}">
+                                        <div class="card-header bg-viettel text-white">
+                                            <h5 class="mb-0">{{ package.name }}</h5>
+                                            {% if not package.is_active %}
+                                                <span class="badge bg-danger float-end">Ngừng cung cấp</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>Loại gói:</strong> {{ package.get_plan_type_display }}</p>
+                                            <p><strong>Dung lượng data:</strong> {% if package.data_volume %}{{ package.data_volume }} MB{% else %}Không có{% endif %}</p>
+                                            <p><strong>Tốc độ:</strong> {% if package.data_speed %}{{ package.data_speed }}{% else %}Không có{% endif %}</p>
+                                            <p><strong>Phút gọi:</strong> {% if package.voice_minutes %}{{ package.voice_minutes }} phút{% else %}Không có{% endif %}</p>
+                                            <p><strong>Số SMS:</strong> {% if package.sms_count %}{{ package.sms_count }}{% else %}Không có{% endif %}</p>
+                                            <p><strong>Giá:</strong> {{ package.price }} VNĐ</p>
+                                            <p><strong>Thời hạn:</strong> {{ package.duration_days }} ngày</p>
+                                            <!-- Nút xem chi tiết -->
+                                            <button class="btn btn-outline-viettel toggle-details mt-2" data-target="packageDetails{{ package.id }}">Xem chi tiết</button>
+                                            <!-- Phần chi tiết gói cước (ẩn mặc định) -->
+                                            <div id="packageDetails{{ package.id }}" class="package-details mt-3" style="display: none;">
+                                                <hr>
+                                                <p><strong>Mô tả:</strong> {{ package.description }}</p>
+                                                <p><strong>Trạng thái:</strong> {% if package.is_active %}Đang cung cấp{% else %}Ngừng cung cấp{% endif %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if not packages_with_promotion and not packages_without_promotion %}
+                        <p class="text-center text-muted">Không có gói cước nào phù hợp với bộ lọc của bạn.</p>
                     {% endif %}
                 </div>
             </div>

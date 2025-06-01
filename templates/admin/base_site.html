@@ -1,0 +1,210 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | MyICT Telecom Admin{% endblock %}
+
+{% block extrastyle %}
+<style>
+    :root {
+        --primary-color: #dc3545;  /* Màu đỏ Viettel */
+        --secondary-color: #c8102e;  /* Màu đỏ đậm Viettel */
+        --accent-color: #ffc107;  /* Màu vàng nhấn */
+        --text-color: #333333;
+        --light-bg: #f8f9fa;
+        --border-color: #dee2e6;
+    }
+
+    /* Header */
+    #header {
+        background: var(--primary-color);
+        color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #branding h1 {
+        font-weight: 600;
+    }
+
+    #branding h1 a:link, #branding h1 a:visited {
+        color: white;
+    }
+
+    /* Sidebar */
+    #content-related {
+        background: var(--light-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .module h2, .module caption {
+        background: var(--primary-color);
+        color: white;
+        font-weight: 500;
+        border-radius: 4px 4px 0 0;
+    }
+
+    /* Buttons */
+    .button, input[type=submit], input[type=button], .submit-row input {
+        background: var(--primary-color);
+        color: white;
+        border-radius: 4px;
+        border: none;
+        padding: 10px 15px;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+
+    .button:hover, input[type=submit]:hover, input[type=button]:hover {
+        background: var(--secondary-color);
+    }
+
+    .button.default {
+        background: var(--primary-color);
+    }
+
+    .button.default:hover {
+        background: var(--secondary-color);
+    }
+
+    /* Tables */
+    #changelist table thead th {
+        background: var(--light-bg);
+        color: var(--text-color);
+        font-weight: 600;
+    }
+
+    #changelist table tbody tr:hover {
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+
+    /* Dashboard */
+    .dashboard .module table th {
+        width: 100%;
+        background: var(--light-bg);
+    }
+
+    .dashboard .module table td {
+        white-space: nowrap;
+    }
+
+    /* Cards */
+    .dashboard .module {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        background: white;
+    }
+
+    /* Recent Actions */
+    .module ul.actionlist {
+        padding-left: 0;
+    }
+
+    .module ul.actionlist li {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .module ul.actionlist li:last-child {
+        border-bottom: none;
+    }
+
+    /* Login Page */
+    .login {
+        background: var(--light-bg);
+    }
+
+    .login #container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .login #header {
+        border-radius: 8px 8px 0 0;
+    }
+
+    /* Breadcrumbs */
+    div.breadcrumbs {
+        background: var(--secondary-color);
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+    div.breadcrumbs a {
+        color: white;
+    }
+
+    /* Messages */
+    .messagelist {
+        margin: 0 0 20px 0;
+    }
+
+    .messagelist li {
+        padding: 12px 15px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Pagination */
+    .paginator {
+        background: var(--light-bg);
+        border-radius: 4px;
+        padding: 10px;
+        margin: 20px 0;
+    }
+
+    .paginator a:link, .paginator a:visited {
+        background: var(--primary-color);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 3px;
+        margin: 0 2px;
+    }
+
+    .paginator a:hover {
+        background: var(--secondary-color);
+    }
+
+    /* Search */
+    #searchbar {
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        padding: 8px 12px;
+    }
+
+    /* Filters */
+    #changelist-filter h2 {
+        background: var(--primary-color);
+        color: white;
+        border-radius: 4px 4px 0 0;
+    }
+
+    #changelist-filter li.selected a {
+        color: var(--primary-color);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        #header {
+            padding: 10px 20px;
+        }
+        
+        #branding h1 {
+            font-size: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <img src="{% static 'images/logo.svg' %}" alt="Viettel Logo" height="40" style="margin-right: 10px;">
+        MyICT Telecom Administration
+    </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %} 

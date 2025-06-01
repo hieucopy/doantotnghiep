@@ -1,0 +1,305 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .admin-dashboard {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #3498db;
+    }
+
+    .card-header i {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+        color: #3498db;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #2c3e50;
+    }
+
+    .card-content {
+        color: #666;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+
+    .feature-item:hover {
+        background: #e9ecef;
+    }
+
+    .feature-item i {
+        margin-right: 0.75rem;
+        color: #3498db;
+    }
+
+    .feature-link {
+        color: #2c3e50;
+        text-decoration: none;
+        font-weight: 500;
+        flex: 1;
+    }
+
+    .feature-link:hover {
+        color: #3498db;
+    }
+
+    .feature-description {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #3498db;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .action-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .action-button:hover {
+        background: #2980b9;
+        color: white;
+    }
+
+    .action-button i {
+        margin-right: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-actions {
+            flex-direction: column;
+        }
+
+        .action-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="dashboard-header">
+        <h1>{% trans 'Telecom Admin Dashboard' %}</h1>
+        <p>{% trans 'Manage your telecom services and analyze customer behavior' %}</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <i class="fas fa-chart-line"></i>
+                <h2>{% trans 'Analytics & Insights' %}</h2>
+            </div>
+            <div class="card-content">
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <i class="fas fa-user-chart"></i>
+                        <a href="{% url 'admin:churn_prediction_churnprediction_customer_insights' %}" class="feature-link">
+                            {% trans 'Customer Insights' %}
+                            <div class="feature-description">
+                                {% trans 'Detailed analysis of customer behavior and churn risk factors' %}
+                            </div>
+                        </a>
+                    </li>
+                    <li class="feature-item">
+                        <i class="fas fa-brain"></i>
+                        <a href="{% url 'admin:churn_prediction_churnprediction_model_insights' %}" class="feature-link">
+                            {% trans 'Model Insights' %}
+                            <div class="feature-description">
+                                {% trans 'Model performance metrics and feature importance analysis' %}
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-header">
+                <i class="fas fa-cogs"></i>
+                <h2>{% trans 'Churn Prediction' %}</h2>
+            </div>
+            <div class="card-content">
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <i class="fas fa-search"></i>
+                        <a href="{% url 'admin:churn_prediction_churnprediction_predict' %}" class="feature-link">
+                            {% trans 'Predict Churn' %}
+                            <div class="feature-description">
+                                {% trans 'Analyze churn risk for specific customers' %}
+                            </div>
+                        </a>
+                    </li>
+                    <li class="feature-item">
+                        <i class="fas fa-robot"></i>
+                        <a href="{% url 'admin:churn_prediction_churnprediction_train' %}" class="feature-link">
+                            {% trans 'Train Model' %}
+                            <div class="feature-description">
+                                {% trans 'Train and update the churn prediction model' %}
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-header">
+                <i class="fas fa-tachometer-alt"></i>
+                <h2>{% trans 'Quick Stats' %}</h2>
+            </div>
+            <div class="card-content">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ total_users }}</div>
+                        <div class="stat-label">{% trans 'Total Users' %}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ total_services }}</div>
+                        <div class="stat-label">{% trans 'Active Services' %}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ total_tickets }}</div>
+                        <div class="stat-label">{% trans 'Support Tickets' %}</div>
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <a href="{% url 'admin:users_customuser_changelist' %}" class="action-button">
+                        <i class="fas fa-users"></i>
+                        {% trans 'Manage Users' %}
+                    </a>
+                    <a href="{% url 'admin:services_serviceusage_changelist' %}" class="action-button">
+                        <i class="fas fa-mobile-alt"></i>
+                        {% trans 'View Services' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if app_list %}
+    <div class="dashboard-card">
+        <div class="card-header">
+            <i class="fas fa-th-large"></i>
+            <h2>{% trans 'All Applications' %}</h2>
+        </div>
+        <div class="card-content">
+            {% for app in app_list %}
+            <div class="app-item">
+                <h3>{{ app.name }}</h3>
+                <div class="model-list">
+                    {% for model in app.models %}
+                    {% if model.admin_url %}
+                    <a href="{{ model.admin_url }}" class="model-link">{{ model.name }}</a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -12,19 +12,43 @@ import random
 def services_view(request):
     plan_type = request.GET.get('plan_type', '')
     is_active = request.GET.get('is_active', '')
+    now = timezone.now()
+    
+    # Lấy tất cả gói cước
     packages = ServicePlan.objects.all()
     if plan_type:
         packages = packages.filter(plan_type=plan_type)
     if is_active:
         packages = packages.filter(is_active=True)
-    promotions = Promotion.objects.filter(
+    
+    # Lấy các khuyến mãi đang hoạt động
+    active_promotions = Promotion.objects.filter(
         is_active=True,
-        start_date__lte=timezone.now(),
-        end_date__gte=timezone.now()
+        start_date__lte=now,
+        end_date__gte=now
     )
+    
+    # Phân loại gói cước
+    packages_with_promotion = []
+    packages_without_promotion = []
+    
+    for package in packages:
+        has_active_promotion = False
+        for promotion in active_promotions:
+            if package in promotion.service_plans.all():
+                has_active_promotion = True
+                break
+        
+        if has_active_promotion:
+            packages_with_promotion.append(package)
+        else:
+            packages_without_promotion.append(package)
+    
     return render(request, 'services/services.html', {
-        'packages': packages,
-        'promotions': promotions
+        'packages_with_promotion': packages_with_promotion,
+        'packages_without_promotion': packages_without_promotion,
+        'promotions': active_promotions,
+        'now': now
     })
 
 @login_required

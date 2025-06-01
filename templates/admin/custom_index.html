@@ -1,0 +1,16 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block sidebar %}
+{{ block.super }}
+<div class="module" style="margin-top: 20px;">
+    <h2>{% trans "Quản lý mô hình" %}</h2>
+    <ul>
+        <li>
+            <a href="{% url 'admin:churn_prediction_evaluate' %}">
+                {% trans "Đánh giá độ chính xác mô hình" %}
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %} 

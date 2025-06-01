@@ -1,0 +1,144 @@
+{% extends "admin/login.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    body.login {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+        margin: 20px;
+        overflow: hidden;
+    }
+
+    #header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+
+    #branding h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    #branding h1 a {
+        color: white;
+        text-decoration: none;
+    }
+
+    #content {
+        padding: 30px;
+    }
+
+    .form-row {
+        padding: 10px 0;
+    }
+
+    .form-row label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .form-row input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-row input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+    }
+
+    .submit-row {
+        padding: 20px 0 0;
+        text-align: center;
+    }
+
+    .submit-row input {
+        width: 100%;
+        padding: 12px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .submit-row input:hover {
+        background: var(--secondary-color);
+    }
+
+    .errornote {
+        background: #fff3f3;
+        border: 1px solid #ffcdd2;
+        color: #d32f2f;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    /* Logo */
+    .login-logo {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .login-logo img {
+        height: 60px;
+        margin-bottom: 10px;
+    }
+
+    /* Password Reset Link */
+    .password-reset-link {
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .password-reset-link a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .password-reset-link a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-logo">
+    <img src="{% static 'images/logo.svg' %}" alt="MyICT Telecom Logo">
+</div>
+
+{{ block.super }}
+
+<div class="password-reset-link">
+    <a href="{% url 'admin_password_reset' %}">{% trans 'Forgotten your password or username?' %}</a>
+</div>
+{% endblock %} 

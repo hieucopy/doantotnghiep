@@ -1,0 +1,165 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .evaluation-form {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .form-group input[type="date"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .help-text {
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+    .recent-evaluations {
+        margin-top: 30px;
+    }
+    .recent-evaluations h2 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+    .evaluation-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    .evaluation-table th,
+    .evaluation-table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    .evaluation-table th {
+        background: #f5f5f5;
+    }
+    .evaluation-table tr:nth-child(even) {
+        background: #f9f9f9;
+    }
+    .submit-row {
+        margin-top: 20px;
+        text-align: right;
+    }
+    .submit-row input {
+        background: #417690;
+        color: #fff;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .submit-row input:hover {
+        background: #205067;
+    }
+    .alert {
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+    }
+    .alert-success {
+        background: #dff0d8;
+        color: #3c763d;
+        border: 1px solid #d6e9c6;
+    }
+    .alert-error {
+        background: #f2dede;
+        color: #a94442;
+        border: 1px solid #ebccd1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="evaluation-form">
+    <h1>{% trans "Đánh giá độ chính xác mô hình" %}</h1>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="reference_date">
+                Ngày tham chiếu
+                <span class="help-text">(Chọn ngày tham chiếu để đánh giá độ chính xác của mô hình)</span>
+            </label>
+            <select name="reference_date" id="reference_date" required>
+                <option value="">-- Chọn ngày tham chiếu --</option>
+                {% for date in reference_dates %}
+                <option value="{{ date|date:'Y-m-d' }}">{{ date|date:'d/m/Y' }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Đánh giá mô hình">
+        </div>
+    </form>
+
+    {% if recent_evaluations %}
+    <div class="recent-evaluations">
+        <h2>Kết quả đánh giá gần đây</h2>
+        <table class="evaluation-table">
+            <thead>
+                <tr>
+                    <th>Ngày tham chiếu</th>
+                    <th>Ngày đánh giá</th>
+                    <th>Số ngày</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-score</th>
+                    <th>ROC AUC</th>
+                    <th>Tổng users</th>
+                    <th>Churn thực tế</th>
+                    <th>Churn dự đoán</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eval in recent_evaluations %}
+                <tr>
+                    <td>{{ eval.reference_date|date:"d/m/Y" }}</td>
+                    <td>{{ eval.evaluation_date|date:"d/m/Y" }}</td>
+                    <td>{{ eval.time_elapsed_days }}</td>
+                    <td>{{ eval.accuracy|floatformat:3 }}</td>
+                    <td>{{ eval.precision|floatformat:3 }}</td>
+                    <td>{{ eval.recall|floatformat:3 }}</td>
+                    <td>{{ eval.f1_score|floatformat:3 }}</td>
+                    <td>{{ eval.roc_auc|floatformat:3 }}</td>
+                    <td>{{ eval.total_users }}</td>
+                    <td>{{ eval.actual_churns }}</td>
+                    <td>{{ eval.predicted_churns }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

@@ -1,0 +1,485 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .insights-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .insights-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+
+    .insights-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .search-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .search-form {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+    }
+
+    .search-btn {
+        background: #3498db;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .search-btn:hover {
+        background: #2980b9;
+        transform: translateY(-1px);
+    }
+
+    .customer-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .info-card h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+    }
+
+    .info-grid {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: white;
+        border-radius: 4px;
+    }
+
+    .info-item strong {
+        color: #2c3e50;
+    }
+
+    .info-item span {
+        color: #666;
+    }
+
+    .service-history {
+        margin-top: 2rem;
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .history-table th, .history-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .history-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .history-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .churn-factors {
+        margin-top: 2rem;
+    }
+
+    .factor-list {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .factor-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .factor-icon {
+        width: 40px;
+        height: 40px;
+        background: #e3f2fd;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3498db;
+        font-size: 1.25rem;
+    }
+
+    .factor-content {
+        flex: 1;
+    }
+
+    .factor-content h4 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .factor-content p {
+        margin: 0.25rem 0 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .factor-impact {
+        font-weight: 600;
+        color: #e74c3c;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .probability-bar-container {
+        width: 100%;
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin: 10px 0;
+        overflow: hidden;
+    }
+
+    .probability-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .churn-probability {
+        font-weight: 600;
+        font-size: 1.1em;
+    }
+
+    .risk-level {
+        text-align: center;
+        margin-top: 5px;
+        font-weight: 600;
+    }
+
+    .high-risk {
+        color: #e74c3c;
+    }
+
+    .medium-risk {
+        color: #f39c12;
+    }
+
+    .low-risk {
+        color: #2ecc71;
+    }
+
+    @media (max-width: 768px) {
+        .insights-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+
+        .search-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .form-group {
+            max-width: none;
+        }
+
+        .customer-info {
+            grid-template-columns: 1fr;
+        }
+
+        .history-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="insights-container">
+    <div class="insights-header">
+        <h1>Customer Insights</h1>
+        <p>Detailed analysis of customer behavior and churn risk factors</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="search-section">
+        <form method="get" class="search-form">
+            <div class="form-group">
+                <label for="search_type">Search By:</label>
+                <select name="search_type" id="search_type">
+                    <option value="id">User ID</option>
+                    <option value="username">Username</option>
+                    <option value="email">Email</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="search_query">Search Query:</label>
+                <input type="text" name="search_query" id="search_query" 
+                       placeholder="Enter search term" required>
+            </div>
+            <button type="submit" class="search-btn">Search Customer</button>
+        </form>
+    </div>
+
+    {% if customer %}
+    <div class="customer-info">
+        <div class="info-card">
+            <h3>Basic Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Username:</strong>
+                    <span>{{ customer.username }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Email:</strong>
+                    <span>{{ customer.email }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Member Since:</strong>
+                    <span>{{ customer.date_joined|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Last Login:</strong>
+                    <span>{{ customer.last_login|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>Churn Risk Analysis</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Churn Probability:</strong>
+                    <span class="churn-probability">{{ customer.churn_probability|floatformat:1 }}%</span>
+                </div>
+                <div class="probability-bar-container">
+                    <div class="probability-bar" style="width: {{ customer.churn_probability }}%"></div>
+                </div>
+                <div class="risk-level">
+                    {% if customer.churn_probability >= 70 %}
+                        <span class="high-risk">High Risk</span>
+                    {% elif customer.churn_probability >= 40 %}
+                        <span class="medium-risk">Medium Risk</span>
+                    {% else %}
+                        <span class="low-risk">Low Risk</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>Service Usage</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Total Packages:</strong>
+                    <span>{{ customer.total_packages|default:"0" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Total Spent:</strong>
+                    <span>{{ customer.total_spent|default:"0"|floatformat:0 }} VND</span>
+                </div>
+                <div class="info-item">
+                    <strong>Average Data Usage:</strong>
+                    <span>{{ customer.avg_data_usage|default:"0"|floatformat:0 }} MB</span>
+                </div>
+                <div class="info-item">
+                    <strong>Average Call Minutes:</strong>
+                    <span>{{ customer.avg_call_minutes|default:"0"|floatformat:0 }} min</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>Support History</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Total Tickets:</strong>
+                    <span>{{ customer.total_tickets|default:"0" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Average Rating:</strong>
+                    <span>{{ customer.avg_rating|default:"0"|floatformat:1 }}/5.0</span>
+                </div>
+                <div class="info-item">
+                    <strong>Last Ticket:</strong>
+                    <span>{{ customer.last_ticket_date|default:"Never"|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Response Time:</strong>
+                    <span>{{ customer.avg_response_time|default:"0"|floatformat:0 }} hours</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="service-history">
+        <h3>Service Usage History</h3>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Start Date</th>
+                    <th>Service Plan</th>
+                    <th>Data Usage</th>
+                    <th>Call Minutes</th>
+                    <th>SMS Used</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usage in service_history %}
+                <tr>
+                    <td>{{ usage.start_date|date:"d/m/Y" }}</td>
+                    <td>{{ usage.service_plan }}</td>
+                    <td>{{ usage.data_usage|floatformat:0 }} MB</td>
+                    <td>{{ usage.call_minutes|floatformat:0 }} min</td>
+                    <td>{{ usage.sms_used }}</td>
+                    <td>{{ usage.amount|floatformat:0 }} VND</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center;">No service history available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="churn-factors">
+        <h3>Churn Risk Factors</h3>
+        <div class="factor-list">
+            {% for factor in churn_factors %}
+            <div class="factor-item">
+                <div class="factor-icon">
+                    {% if factor.impact == 'high' %}⚠️
+                    {% elif factor.impact == 'medium' %}⚡
+                    {% else %}ℹ️{% endif %}
+                </div>
+                <div class="factor-content">
+                    <h4>{{ factor.name }}</h4>
+                    <p>{{ factor.description }}</p>
+                </div>
+                <div class="factor-impact">
+                    {{ factor.value }}
+                </div>
+            </div>
+            {% empty %}
+            <p>No significant churn risk factors identified</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'admin:index' %}" class="back-link">← Back to Admin Dashboard</a>
+</div>
+{% endblock %} 

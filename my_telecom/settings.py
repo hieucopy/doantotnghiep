@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'services',
     'support',
+    'churn_prediction',
+    
 ]
 
 MIDDLEWARE = [

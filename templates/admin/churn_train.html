@@ -1,0 +1,320 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .train-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .train-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+
+    .train-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .train-header p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    .train-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .form-group .help-text {
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: normal;
+    }
+
+    .form-group input {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+    }
+
+    .form-group input[type="range"] {
+        padding: 0;
+        height: 6px;
+        background: #ddd;
+        border-radius: 3px;
+        -webkit-appearance: none;
+    }
+
+    .form-group input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #3498db;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .form-group input[type="range"]::-webkit-slider-thumb:hover {
+        background: #2980b9;
+    }
+
+    .range-value {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    .submit-btn {
+        background: #3498db;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: fit-content;
+        margin-top: 1rem;
+    }
+
+    .submit-btn:hover {
+        background: #2980b9;
+        transform: translateY(-1px);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    .metrics-container {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .metrics-container.show {
+        display: block;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .metric-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .metric-card h4 {
+        color: #2c3e50;
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #3498db;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .train-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="train-container">
+    <div class="train-header">
+        <h1>Model Training</h1>
+        <p>Configure and train the churn prediction model with your data</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="train-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>
+                Reference Date
+                <span class="help-text">(Data before this date will be used for training, after for testing)</span>
+            </label>
+            <input type="date" name="reference_date" id="reference_date" 
+                   required value="{{ today_date|date:'Y-m-d' }}">
+        </div>
+
+        <div class="form-group">
+            <label>
+                Test Size
+                <span class="help-text">(0.1 - 0.4 recommended)</span>
+            </label>
+            <input type="range" name="test_size" id="test_size" 
+                   min="0.1" max="0.4" step="0.1" value="0.2" 
+                   oninput="updateRangeValue(this)">
+            <div class="range-value">0.2</div>
+        </div>
+
+        <div class="form-group">
+            <label>
+                Number of Estimators
+                <span class="help-text">(50 - 200 recommended)</span>
+            </label>
+            <input type="number" name="n_estimators" id="n_estimators" 
+                   required value="200" min="1">
+        </div>
+
+        <div class="form-group">
+            <label>
+                Max Depth
+                <span class="help-text">(5 - 20 recommended)</span>
+            </label>
+            <input type="number" name="max_depth" id="max_depth" 
+                   value="" min="1">
+        </div>
+
+        <button type="submit" class="submit-btn">Train Model</button>
+    </form>
+
+    {% if metrics %}
+    <div class="metrics-container show">
+        <h3>Training Results</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Accuracy</h4>
+                <div class="metric-value">{{ metrics.accuracy|floatformat:3 }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Precision</h4>
+                <div class="metric-value">{{ metrics.precision|floatformat:3 }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Recall</h4>
+                <div class="metric-value">{{ metrics.recall|floatformat:3 }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>F1 Score</h4>
+                <div class="metric-value">{{ metrics.f1_score|floatformat:3 }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'admin:index' %}" class="back-link">← Back to Admin Dashboard</a>
+</div>
+
+<script>
+    function updateRangeValue(input) {
+        input.nextElementSibling.textContent = input.value;
+    }
+
+    // Initialize range values
+    document.addEventListener('DOMContentLoaded', function() {
+        const rangeInputs = document.querySelectorAll('input[type="range"]');
+        rangeInputs.forEach(input => updateRangeValue(input));
+    });
+</script>
+{% endblock %}

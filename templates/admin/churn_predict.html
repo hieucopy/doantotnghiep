@@ -1,0 +1,315 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .predict-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .predict-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+
+    .predict-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .predict-header p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    .predict-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-group input {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+    }
+
+    .submit-btn {
+        background: #3498db;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .submit-btn:hover {
+        background: #2980b9;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    .result-container {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+
+    .result-header {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .probability-bar {
+        height: 24px;
+        background: #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+
+    .probability-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        transition: width 0.5s ease-in-out;
+    }
+
+    .probability-text {
+        text-align: center;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .recommendation {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #fff;
+        border-radius: 4px;
+        border-left: 4px solid #3498db;
+    }
+
+    .recommendation h3 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .recommendation p {
+        color: #666;
+        margin: 0;
+    }
+
+    .user-info {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .user-info h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .info-group {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .info-group h4 {
+        color: #3498db;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .info-group p {
+        margin: 0.5rem 0;
+        color: #2c3e50;
+    }
+
+    .info-group strong {
+        color: #34495e;
+    }
+
+    .prediction-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+    }
+
+    .prediction-section h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="predict-container">
+    <div class="predict-header">
+        <h1>Churn Risk Analysis</h1>
+        <p>Enter a user ID to predict their likelihood of churning</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="predict-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="user_id">User ID:</label>
+            <input type="number" name="user_id" id="user_id" required 
+                   placeholder="Enter user ID" min="1">
+        </div>
+        <button type="submit" class="submit-btn">Analyze Churn Risk</button>
+    </form>
+
+    {% if churn_probability is not None %}
+    <div class="result-container">
+        <div class="result-header">Prediction Results</div>
+        
+        {% if user_info %}
+        <div class="user-info">
+            <h3>User Information</h3>
+            <div class="info-grid">
+                <div class="info-group">
+                    <h4>Basic Information</h4>
+                    <p><strong>Username:</strong> {{ user_info.username }}</p>
+                    <p><strong>Email:</strong> {{ user_info.email }}</p>
+                    <p><strong>Member Since:</strong> {{ user_info.date_joined|date:"d/m/Y" }}</p>
+                    <p><strong>Last Login:</strong> {{ user_info.last_login|date:"d/m/Y H:i" }}</p>
+                </div>
+                
+                <div class="info-group">
+                    <h4>Service Usage</h4>
+                    <p><strong>Total Packages:</strong> {{ user_info.total_packages|default:"0" }}</p>
+                    <p><strong>Total Spent:</strong> {{ user_info.total_spent|default:"0"|floatformat:0 }} VND</p>
+                    <p><strong>Average Data Usage:</strong> {{ user_info.avg_data_usage|default:"0"|floatformat:0 }} MB</p>
+                    <p><strong>Average Call Minutes:</strong> {{ user_info.avg_call_minutes|default:"0"|floatformat:0 }} minutes</p>
+                    <p><strong>Average SMS Used:</strong> {{ user_info.avg_sms_used|default:"0"|floatformat:0 }}</p>
+                </div>
+                
+                <div class="info-group">
+                    <h4>Support History</h4>
+                    <p><strong>Total Support Tickets:</strong> {{ user_info.total_tickets|default:"0" }}</p>
+                    <p><strong>Average Rating:</strong> {{ user_info.avg_rating|default:"0"|floatformat:1 }}/5.0</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="prediction-section">
+            <h3>Churn Risk Analysis</h3>
+            <div class="probability-bar">
+                <div class="probability-fill" style="width: {{ churn_probability|floatformat:1 }}%"></div>
+            </div>
+            
+            <div class="probability-text">
+                Churn Probability: {{ churn_probability|floatformat:1 }}%
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'admin:index' %}" class="back-link">← Back to Admin Dashboard</a>
+</div>
+
+{% if churn_probability is not None %}
+<script>
+    // Animation for probability bar
+    document.addEventListener('DOMContentLoaded', function() {
+        const probabilityFill = document.querySelector('.probability-fill');
+        const targetWidth = '{{ churn_probability|floatformat:1 }}%';
+        probabilityFill.style.width = '0%';
+        setTimeout(() => {
+            probabilityFill.style.width = targetWidth;
+        }, 100);
+    });
+</script>
+{% endif %}
+{% endblock %}
