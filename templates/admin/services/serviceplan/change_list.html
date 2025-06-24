@@ -1,0 +1,104 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block content %}
+<div style="display: flex; gap: 20px; margin-bottom: 20px;">
+    <div onclick="filterByType('DATA')" style="flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" class="summary-card" data-type="DATA">
+        <h3 style="color: #3498db;">
+            <i class="fas fa-database"></i> Gói Data
+        </h3>
+        <p style="font-size: 24px; font-weight: bold;">{{ data_count }}</p>
+    </div>
+    <div onclick="filterByType('VOICE')" style="flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" class="summary-card" data-type="VOICE">
+        <h3 style="color: #27ae60;">
+            <i class="fas fa-phone"></i> Gói Thoại
+        </h3>
+        <p style="font-size: 24px; font-weight: bold;">{{ voice_count }}</p>
+    </div>
+    <div onclick="filterByType('SMS')" style="flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" class="summary-card" data-type="SMS">
+        <h3 style="color: #e67e22;">
+            <i class="fas fa-sms"></i> Gói SMS
+        </h3>
+        <p style="font-size: 24px; font-weight: bold;">{{ sms_count }}</p>
+    </div>
+    <div onclick="filterByType('COMBO')" style="flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" class="summary-card" data-type="COMBO">
+        <h3 style="color: #9b59b6;">
+            <i class="fas fa-cube"></i> Gói Combo
+        </h3>
+        <p style="font-size: 24px; font-weight: bold;">{{ combo_count }}</p>
+    </div>
+</div>
+
+<style>
+    .summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .summary-card.active {
+        border: 2px solid;
+        border-color: inherit;
+    }
+    
+    .summary-card[data-type="DATA"].active {
+        border-color: #3498db;
+    }
+    
+    .summary-card[data-type="VOICE"].active {
+        border-color: #27ae60;
+    }
+    
+    .summary-card[data-type="SMS"].active {
+        border-color: #e67e22;
+    }
+    
+    .summary-card[data-type="COMBO"].active {
+        border-color: #9b59b6;
+    }
+</style>
+
+<script>
+function filterByType(type) {
+    // Xóa active class từ tất cả các card
+    document.querySelectorAll('.summary-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Thêm active class cho card được chọn
+    const selectedCard = document.querySelector(`.summary-card[data-type="${type}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('active');
+    }
+    
+    // Lấy URL hiện tại
+    let currentUrl = new URL(window.location.href);
+    
+    // Kiểm tra xem đã có filter plan_type chưa
+    if (currentUrl.searchParams.get('plan_type') === type) {
+        // Nếu đang lọc loại này rồi thì xóa filter
+        currentUrl.searchParams.delete('plan_type');
+        selectedCard?.classList.remove('active');
+    } else {
+        // Nếu chưa lọc hoặc đang lọc loại khác thì set filter mới
+        currentUrl.searchParams.set('plan_type', type);
+    }
+    
+    // Chuyển hướng đến URL mới
+    window.location.href = currentUrl.toString();
+}
+
+// Khi trang load, kiểm tra và highlight card đang được filter
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeType = urlParams.get('plan_type');
+    if (activeType) {
+        const activeCard = document.querySelector(`.summary-card[data-type="${activeType}"]`);
+        if (activeCard) {
+            activeCard.classList.add('active');
+        }
+    }
+});
+</script>
+
+{{ block.super }}
+{% endblock %} 

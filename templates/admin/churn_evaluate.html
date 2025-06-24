@@ -9,81 +9,174 @@
         margin: 20px auto;
         padding: 20px;
         background: #fff;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
     .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
     }
+
     .form-group label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
     }
+
     .form-group input[type="date"] {
         width: 100%;
-        padding: 8px;
+        padding: 10px;
         border: 1px solid #ddd;
         border-radius: 4px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
     }
+
+    .form-group input[type="date"]:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+    }
+
     .help-text {
         color: #666;
         font-size: 0.9em;
         margin-top: 5px;
     }
-    .recent-evaluations {
-        margin-top: 30px;
-    }
-    .recent-evaluations h2 {
-        margin-bottom: 15px;
-        color: #333;
-    }
-    .evaluation-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-    }
-    .evaluation-table th,
-    .evaluation-table td {
-        padding: 8px;
-        border: 1px solid #ddd;
-        text-align: left;
-    }
-    .evaluation-table th {
-        background: #f5f5f5;
-    }
-    .evaluation-table tr:nth-child(even) {
-        background: #f9f9f9;
-    }
+
     .submit-row {
         margin-top: 20px;
         text-align: right;
     }
+
     .submit-row input {
-        background: #417690;
+        background: #3498db;
         color: #fff;
-        padding: 10px 15px;
+        padding: 12px 24px;
         border: none;
         border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
         cursor: pointer;
+        transition: background-color 0.3s;
     }
+
     .submit-row input:hover {
-        background: #205067;
+        background: #2980b9;
     }
+
     .alert {
-        padding: 10px;
-        margin-bottom: 15px;
+        padding: 12px;
+        margin-bottom: 20px;
         border-radius: 4px;
+        font-size: 0.95rem;
     }
+
     .alert-success {
-        background: #dff0d8;
-        color: #3c763d;
-        border: 1px solid #d6e9c6;
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
     }
+
     .alert-error {
-        background: #f2dede;
-        color: #a94442;
-        border: 1px solid #ebccd1;
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .evaluation-results {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    .evaluation-results h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .metric-card {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .metric-card h4 {
+        color: #666;
+        margin: 0 0 10px 0;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #3498db;
+    }
+
+    .evaluation-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .evaluation-table th,
+    .evaluation-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .evaluation-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .evaluation-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .evaluation-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .evaluation-form {
+            margin: 10px;
+            padding: 15px;
+        }
+
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .evaluation-table {
+            display: block;
+            overflow-x: auto;
+        }
     }
 </style>
 {% endblock %}
@@ -109,12 +202,7 @@
                 Ngày tham chiếu
                 <span class="help-text">(Chọn ngày tham chiếu để đánh giá độ chính xác của mô hình)</span>
             </label>
-            <select name="reference_date" id="reference_date" required>
-                <option value="">-- Chọn ngày tham chiếu --</option>
-                {% for date in reference_dates %}
-                <option value="{{ date|date:'Y-m-d' }}">{{ date|date:'d/m/Y' }}</option>
-                {% endfor %}
-            </select>
+            <input type="date" name="reference_date" id="reference_date" required>
         </div>
 
         <div class="submit-row">
@@ -122,9 +210,67 @@
         </div>
     </form>
 
+    {% if evaluation_results %}
+    <div class="evaluation-results">
+        <h2>Kết quả đánh giá</h2>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Accuracy</h4>
+                <div class="metric-value">{{ evaluation_results.accuracy|floatformat:3 }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Precision</h4>
+                <div class="metric-value">{{ evaluation_results.precision|floatformat:3 }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Recall</h4>
+                <div class="metric-value">{{ evaluation_results.recall|floatformat:3 }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>F1-score</h4>
+                <div class="metric-value">{{ evaluation_results.f1_score|floatformat:3 }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>ROC AUC</h4>
+                <div class="metric-value">{{ evaluation_results.roc_auc|floatformat:3 }}</div>
+            </div>
+        </div>
+
+        <div class="details-section">
+            <h3>Chi tiết đánh giá</h3>
+            <table class="evaluation-table">
+                <tr>
+                    <th>Ngày tham chiếu</th>
+                    <td>{{ evaluation_results.reference_date|date:"d/m/Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Ngày đánh giá</th>
+                    <td>{{ evaluation_results.evaluation_date|date:"d/m/Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Số ngày</th>
+                    <td>{{ evaluation_results.time_elapsed_days }}</td>
+                </tr>
+                <tr>
+                    <th>Tổng users</th>
+                    <td>{{ evaluation_results.total_users }}</td>
+                </tr>
+                <tr>
+                    <th>Churn thực tế</th>
+                    <td>{{ evaluation_results.actual_churns }}</td>
+                </tr>
+                <tr>
+                    <th>Churn dự đoán</th>
+                    <td>{{ evaluation_results.predicted_churns }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     {% if recent_evaluations %}
     <div class="recent-evaluations">
-        <h2>Kết quả đánh giá gần đây</h2>
+        <h2>Lịch sử đánh giá gần đây</h2>
         <table class="evaluation-table">
             <thead>
                 <tr>
@@ -162,4 +308,12 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+    // Set max date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('reference_date').max = today;
+    });
+</script>
 {% endblock %} 

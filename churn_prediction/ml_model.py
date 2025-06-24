@@ -244,19 +244,14 @@ class ChurnPredictionModel:
         except Exception as e:
             raise ValueError(f"Lỗi khi chuẩn bị dữ liệu: {str(e)}")
 
-    def train(self, reference_date=None, test_size=0.2, **rf_params):
+    def train(self, reference_date=None, test_size=0.2, smote_ratio=0.5, **rf_params):
         """Huấn luyện model với dữ liệu từ MySQL
         
         Args:
             reference_date: Ngày tham chiếu để xác định churn
             test_size: Tỷ lệ dữ liệu test (mặc định 0.2)
+            smote_ratio: Tỷ lệ mẫu churn so với mẫu không churn sau khi áp dụng SMOTE (mặc định 0.5)
             **rf_params: Các tham số tùy chỉnh cho RandomForestClassifier
-                - n_estimators: Số lượng cây quyết định
-                - max_depth: Độ sâu tối đa của mỗi cây
-                - min_samples_split: Số lượng mẫu tối thiểu để chia node
-                - min_samples_leaf: Số lượng mẫu tối thiểu ở lá
-                - max_features: Số lượng features được xem xét cho mỗi split
-                - và các tham số khác của RandomForestClassifier
         """
         df = self._load_and_prepare_data(reference_date)
         if df.empty:
@@ -272,10 +267,11 @@ class ChurnPredictionModel:
         
         print(f"Phân phối lớp ban đầu: {class_counts.to_dict()}")
         
-        # Nếu số lượng mẫu churn quá ít, thực hiện oversampling cho lớp thiểu số
-        if class_counts[1] < 100:  # Nếu có ít hơn 100 mẫu churn
-            print("Thực hiện oversampling cho lớp churn...")
-            smote = SMOTE(random_state=42, sampling_strategy={1: min(1000, class_counts[0] // 10)})
+        # Tính số lượng mẫu cần tạo dựa trên smote_ratio
+        target_samples = int(class_counts[0] * smote_ratio)
+        if target_samples > class_counts[1]:
+            print(f"Áp dụng SMOTE với tỷ lệ {smote_ratio}...")
+            smote = SMOTE(random_state=42, sampling_strategy={1: target_samples})
             X_resampled, y_resampled = smote.fit_resample(X, y)
             print(f"Phân phối lớp sau khi oversampling: {pd.Series(y_resampled).value_counts().to_dict()}")
             X = X_resampled
@@ -332,7 +328,7 @@ class ChurnPredictionModel:
             'train_size': len(X_train),
             'test_size': len(X_test),
             'oob_score': self.model.oob_score_ if hasattr(self.model, 'oob_score_') else None,
-            'model_params': rf_params  # Thêm các tham số model vào metrics
+            'model_params': rf_params
         }
         
         # Chỉ tính ROC AUC nếu có đủ samples cho cả hai lớp
@@ -366,46 +362,40 @@ class ChurnPredictionModel:
         # Lưu model và scaler
         self._save_model()
         
-        # Tự động lưu dự đoán cho tất cả users tại thời điểm reference_date
-        if reference_date:
+        # Tự động lưu dự đoán cho tất cả người dùng tại ngày tham chiếu
+        if reference_date is not None:
             try:
-                num_predictions = self.save_predictions(reference_date)
-                metrics['predictions_saved'] = num_predictions
-                print(f"\nĐã lưu {num_predictions} dự đoán cho ngày {reference_date.strftime('%Y-%m-%d')}")
+                saved_count = self.save_predictions(reference_date)
+                print(f"\nĐã tự động lưu dự đoán cho {saved_count} người dùng tại ngày {reference_date.strftime('%d/%m/%Y')}")
             except Exception as e:
-                raise ValueError(f"Lỗi khi lưu dự đoán: {str(e)}")
+                print(f"\nLỗi khi tự động lưu dự đoán: {str(e)}")
         
         return metrics
 
-    def predict(self, user_id):
-        """Dự đoán xác suất churn cho một user"""
+    def predict_batch_users(self, user_ids, reference_date=None):
+        """Dự đoán xác suất churn cho một batch users
+        
+        Args:
+            user_ids: List các user_id cần dự đoán
+            reference_date: Ngày tham chiếu để tính toán features
+            
+        Returns:
+            dict: Dictionary chứa kết quả dự đoán cho mỗi user
+        """
         if not self.model or not self.scaler:
             raise ValueError("Model chưa được huấn luyện")
         
+        if reference_date is None:
+            reference_date = pd.Timestamp.now(tz='UTC')
+            
         try:
-            # Chuyển đổi user_id thành int để đảm bảo kiểu dữ liệu đúng
-            user_id = int(user_id)
-            
-            # Kiểm tra xem có dự đoán đã lưu cho user này không
+            # Query để lấy dữ liệu cho nhiều users cùng lúc
             query = """
-                SELECT churn_probability, prediction_date
-                FROM churn_prediction_churnprediction
-                WHERE user_id = %s
-                ORDER BY prediction_date DESC
-                LIMIT 1
-            """
-            result = pd.read_sql(query, self.engine, params=(user_id,))
-            
-            if not result.empty:
-                # Nếu có dự đoán đã lưu, trả về dự đoán mới nhất
-                return float(result['churn_probability'].iloc[0])
-            
-            # Query để lấy dữ liệu user với các tính năng đầy đủ
-            query = """
+                WITH user_metrics AS (
                 SELECT 
-                    u.id, u.date_joined, u.last_login,
-                    TIMESTAMPDIFF(MONTH, u.date_joined, %s) as months_since_joined,
-                    TIMESTAMPDIFF(DAY, u.last_login, %s) as days_since_last_login,
+                        u.id,
+                        COALESCE(TIMESTAMPDIFF(MONTH, u.date_joined, %(ref_date)s), 0) as months_since_joined,
+                        COALESCE(TIMESTAMPDIFF(DAY, u.last_login, %(ref_date)s), 0) as days_since_last_login,
                     COUNT(DISTINCT su.id) as num_service_plans,
                     COALESCE(SUM(su.spent_amount), 0) as total_spent,
                     COALESCE(AVG(su.spent_amount), 0) as avg_spent_per_plan,
@@ -418,49 +408,58 @@ class ChurnPredictionModel:
                     COUNT(DISTINCT st.id) as num_support_tickets,
                     COALESCE(AVG(st.rating), 0) as avg_rating,
                     COALESCE(SUM(su.spent_amount), 0) as total_savings,
-                    -- Tính toán các metrics trong 3 tháng gần đây
-                    SUM(CASE WHEN su.start_date >= DATE_SUB(%s, INTERVAL 3 MONTH) THEN su.spent_amount ELSE 0 END) as recent_spent,
-                    SUM(CASE WHEN su.start_date >= DATE_SUB(%s, INTERVAL 3 MONTH) THEN su.data_usage ELSE 0 END) as recent_data_usage,
-                    SUM(CASE WHEN su.start_date >= DATE_SUB(%s, INTERVAL 3 MONTH) THEN su.call_minutes ELSE 0 END) as recent_call_minutes,
-                    SUM(CASE WHEN su.start_date >= DATE_SUB(%s, INTERVAL 3 MONTH) THEN su.sms_used ELSE 0 END) as recent_sms_used,
-                    COUNT(DISTINCT CASE WHEN su.start_date >= DATE_SUB(%s, INTERVAL 3 MONTH) THEN su.id END) as recent_service_plans,
-                    -- Tính toán tỷ lệ sử dụng dịch vụ
+                        COALESCE(SUM(CASE WHEN su.start_date >= DATE_SUB(%(ref_date)s, INTERVAL 3 MONTH) 
+                            THEN su.spent_amount ELSE 0 END), 0) as recent_spent,
+                        COALESCE(SUM(CASE WHEN su.start_date >= DATE_SUB(%(ref_date)s, INTERVAL 3 MONTH) 
+                            THEN su.data_usage ELSE 0 END), 0) as recent_data_usage,
+                        COALESCE(SUM(CASE WHEN su.start_date >= DATE_SUB(%(ref_date)s, INTERVAL 3 MONTH) 
+                            THEN su.call_minutes ELSE 0 END), 0) as recent_call_minutes,
+                        COALESCE(SUM(CASE WHEN su.start_date >= DATE_SUB(%(ref_date)s, INTERVAL 3 MONTH) 
+                            THEN su.sms_used ELSE 0 END), 0) as recent_sms_used,
+                        COALESCE(COUNT(DISTINCT CASE WHEN su.start_date >= DATE_SUB(%(ref_date)s, INTERVAL 3 MONTH) 
+                            THEN su.id END), 0) as recent_service_plans,
                     CASE 
                         WHEN COUNT(DISTINCT su.id) > 0 THEN 
-                            COUNT(DISTINCT CASE WHEN su.start_date >= DATE_SUB(%s, INTERVAL 3 MONTH) THEN su.id END) * 100.0 / COUNT(DISTINCT su.id)
+                                COALESCE(COUNT(DISTINCT CASE WHEN su.start_date >= DATE_SUB(%(ref_date)s, INTERVAL 3 MONTH) 
+                                    THEN su.id END) * 100.0 / NULLIF(COUNT(DISTINCT su.id), 0), 0)
                         ELSE 0 
                     END as service_usage_ratio,
-                    -- Tính toán tần suất sử dụng dịch vụ
                     CASE 
-                        WHEN TIMESTAMPDIFF(MONTH, u.date_joined, %s) > 0 THEN 
-                            COUNT(DISTINCT su.id) * 1.0 / TIMESTAMPDIFF(MONTH, u.date_joined, %s)
+                            WHEN COALESCE(TIMESTAMPDIFF(MONTH, u.date_joined, %(ref_date)s), 0) > 0 THEN 
+                                COUNT(DISTINCT su.id) * 1.0 / NULLIF(TIMESTAMPDIFF(MONTH, u.date_joined, %(ref_date)s), 0)
                         ELSE 0 
                     END as service_frequency
                 FROM users_customuser u
                 LEFT JOIN services_serviceusage su ON u.id = su.user_id
                 LEFT JOIN support_supportticket st ON u.id = st.user_id
-                WHERE u.id = %s
-                GROUP BY u.id, u.username, u.date_joined, u.last_login
+                    WHERE u.id IN %(user_ids)s
+                    GROUP BY u.id
+                )
+                SELECT * FROM user_metrics
             """
             
-            current_date = pd.to_datetime("2025-05-25 23:59:59", utc=True)
-            df = pd.read_sql(query, self.engine, params=(
-                current_date, current_date, current_date, current_date,
-                current_date, current_date, current_date, current_date,
-                current_date, current_date, user_id
-            ))
+            # Thực hiện query với các tham số
+            params = {
+                'ref_date': reference_date,
+                'user_ids': tuple(user_ids)
+            }
+            df = pd.read_sql(query, self.engine, params=params)
             
             if df.empty:
-                raise ValueError(f"Không tìm thấy dữ liệu cho user_id {user_id}")
+                raise ValueError(f"Không tìm thấy dữ liệu cho users")
             
-            # Tính toán các tính năng bổ sung
-            df['spent_per_month'] = df['total_spent'] / df['months_since_joined'].replace(0, 1)
-            df['data_per_month'] = df['total_data_usage'] / df['months_since_joined'].replace(0, 1)
-            df['calls_per_month'] = df['total_call_minutes'] / df['months_since_joined'].replace(0, 1)
-            df['sms_per_month'] = df['total_sms_used'] / df['months_since_joined'].replace(0, 1)
+            # Đảm bảo không có giá trị null
+            df = df.fillna(0)
+            
+            # Tính toán các features phụ thuộc
+            months_since_joined = df['months_since_joined'].replace(0, 1)  # Tránh chia cho 0
+            df['spent_per_month'] = df['total_spent'] / months_since_joined
+            df['data_per_month'] = df['total_data_usage'] / months_since_joined
+            df['calls_per_month'] = df['total_call_minutes'] / months_since_joined
+            df['sms_per_month'] = df['total_sms_used'] / months_since_joined
             df['recent_usage_ratio'] = df['recent_service_plans'] / df['num_service_plans'].replace(0, 1)
             
-            # Đảm bảo thứ tự cột giống như khi training
+            # Đảm bảo thứ tự và tên các features giống như khi training
             feature_columns = [
                 'months_since_joined', 'days_since_last_login',
                 'num_service_plans', 'total_spent', 'avg_spent_per_plan',
@@ -476,32 +475,64 @@ class ChurnPredictionModel:
                 'recent_usage_ratio'
             ]
             
+            # Chỉ lấy các features cần thiết theo đúng thứ tự
             features = df[feature_columns]
             
-            # Scale features và dự đoán
+            # Chuẩn hóa features
             features_scaled = self.scaler.transform(features)
-            proba = self.model.predict_proba(features_scaled)
             
-            # Xử lý trường hợp model trả về một class
-            if proba.shape[1] == 1:
-                # Nếu chỉ có một class, sử dụng trực tiếp xác suất đó
-                churn_probability = float(proba[0, 0])
-            else:
-                # Nếu có hai classes, lấy xác suất của class churn (class 1)
-                churn_probability = float(proba[0, 1])
+            # Dự đoán xác suất churn cho tất cả users
+            churn_probabilities = self.model.predict_proba(features_scaled)[:, 1]
             
-            # Lưu dự đoán mới vào database
-            cursor = connection.cursor()
-            cursor.execute("""
-                INSERT INTO churn_prediction_churnprediction 
-                (user_id, prediction_date, churn_probability)
-                VALUES (%s, %s, %s)
-            """, [user_id, current_date, churn_probability])
+            # Xác định các yếu tố chính ảnh hưởng đến dự đoán
+            feature_importance = pd.DataFrame({
+                'feature': feature_columns,
+                'importance': self.model.feature_importances_
+            }).sort_values('importance', ascending=False)
             
-            return churn_probability
+            # Tạo kết quả cho từng user
+            results = {}
+            for i, user_id in enumerate(df['id']):
+                churn_probability = float(churn_probabilities[i])
+                risk_level = "Cao" if churn_probability >= 0.7 else "Trung bình" if churn_probability >= 0.3 else "Thấp"
+                
+                results[user_id] = {
+                    'user_id': int(user_id),
+                    'prediction_date': reference_date,
+                    'churn_probability': churn_probability,
+                    'risk_level': risk_level,
+                    'top_factors': feature_importance.head(5).to_dict('records'),
+                    'user_metrics': {
+                        'months_since_joined': int(df.loc[df['id'] == user_id, 'months_since_joined'].fillna(0).iloc[0]),
+                        'days_since_last_login': int(df.loc[df['id'] == user_id, 'days_since_last_login'].fillna(0).iloc[0]),
+                        'total_spent': float(df.loc[df['id'] == user_id, 'total_spent'].fillna(0).iloc[0]),
+                        'avg_rating': float(df.loc[df['id'] == user_id, 'avg_rating'].fillna(0).iloc[0]),
+                        'recent_activity': {
+                            'spent': float(df.loc[df['id'] == user_id, 'recent_spent'].fillna(0).iloc[0]),
+                            'data_usage': float(df.loc[df['id'] == user_id, 'recent_data_usage'].fillna(0).iloc[0]),
+                            'call_minutes': float(df.loc[df['id'] == user_id, 'recent_call_minutes'].fillna(0).iloc[0]),
+                            'sms_used': int(df.loc[df['id'] == user_id, 'recent_sms_used'].fillna(0).iloc[0])
+                        }
+                    }
+                }
+            
+            return results
             
         except Exception as e:
-            raise ValueError(f"Lỗi khi dự đoán: {str(e)}")
+            raise ValueError(f"Lỗi khi dự đoán churn cho batch users: {str(e)}")
+            
+    def predict_user_churn(self, user_id, reference_date=None):
+        """Dự đoán xác suất churn cho một user
+        
+        Args:
+            user_id: ID của user cần dự đoán
+            reference_date: Ngày tham chiếu để tính toán features
+            
+        Returns:
+            dict: Dictionary chứa kết quả dự đoán
+        """
+        results = self.predict_batch_users([user_id], reference_date)
+        return results[user_id]
 
     def get_feature_importance(self):
         """Lấy feature importance từ model đã huấn luyện"""
@@ -725,57 +756,92 @@ class ChurnPredictionModel:
             elif evaluation_date.tzinfo is None:
                 evaluation_date = pytz.UTC.localize(evaluation_date)
                 
+            # Đảm bảo reference_date có timezone
+            if reference_date.tzinfo is None:
+                reference_date = pytz.UTC.localize(reference_date)
+
             # Kiểm tra xem có dữ liệu dự đoán cho ngày tham chiếu không
-            query = """
-                SELECT COUNT(*) as count
-                FROM churn_prediction_churnprediction
-                WHERE DATE(prediction_date) = DATE(%s)
-            """
-            result = pd.read_sql(query, self.engine, params=(reference_date,))
+            check_query = "SELECT COUNT(*) as count FROM churn_prediction_churnprediction WHERE DATE(prediction_date) = DATE(%s)"
+            result = pd.read_sql(check_query, self.engine, params=(reference_date,))
             prediction_count = result['count'].iloc[0]
             
             if prediction_count == 0:
                 raise ValueError(f"Không tìm thấy dữ liệu dự đoán cho ngày {reference_date.strftime('%d/%m/%Y')}. "
                                f"Vui lòng huấn luyện mô hình và lưu dự đoán trước khi đánh giá.")
-            
-            # Lấy dữ liệu dự đoán và thực tế
-            query = """
-                SELECT cp.user_id, cp.churn_probability,
-                       u.last_login,
-                       su_activity.user_id AS su_user_id,
-                       st_activity.user_id AS st_user_id,
-                       CASE
-                           -- Điều kiện: Không có hoạt động nào (service_usage hoặc support_ticket)
-                           -- trong vòng 90 ngày SAU ngày tham chiếu
-                           WHEN (su_activity.user_id IS NULL AND st_activity.user_id IS NULL) THEN 1
-                           ELSE 0
-                       END as actual_churn
+
+            # Query cơ bản để lấy dữ liệu
+            base_query = """
+                SELECT 
+                    cp.user_id,
+                    cp.churn_probability,
+                    CONVERT_TZ(u.last_login, 'SYSTEM', 'UTC') as last_login,
+                    (
+                        SELECT COUNT(*) 
+                        FROM services_serviceusage su 
+                        WHERE su.user_id = cp.user_id 
+                        AND su.start_date >= DATE_SUB(%s, INTERVAL 3 MONTH)
+                        AND su.start_date < %s
+                    ) as recent_activity_count,
+                    (
+                        SELECT COUNT(*) 
+                        FROM services_serviceusage su 
+                        WHERE su.user_id = cp.user_id 
+                        AND su.start_date >= DATE_SUB(%s, INTERVAL 6 MONTH)
+                        AND su.start_date < DATE_SUB(%s, INTERVAL 3 MONTH)
+                    ) as previous_activity_count,
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM services_serviceusage su 
+                        WHERE su.user_id = cp.user_id 
+                        AND su.start_date >= %s
+                        AND su.start_date < DATE_ADD(%s, INTERVAL 3 MONTH)
+                    ) THEN 1 ELSE 0 END as has_service_after,
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM support_supportticket st 
+                        WHERE st.user_id = cp.user_id 
+                        AND st.created_at >= %s
+                        AND st.created_at < DATE_ADD(%s, INTERVAL 3 MONTH)
+                    ) THEN 1 ELSE 0 END as has_support_after
                 FROM churn_prediction_churnprediction cp
                 JOIN users_customuser u ON cp.user_id = u.id
-                LEFT JOIN services_serviceusage su_activity 
-                    ON cp.user_id = su_activity.user_id 
-                    AND su_activity.start_date >= DATE_ADD(%s, INTERVAL 1 DAY)
-                    AND su_activity.start_date <= DATE_ADD(%s, INTERVAL 90 DAY)
-                LEFT JOIN support_supportticket st_activity 
-                    ON cp.user_id = st_activity.user_id 
-                    AND st_activity.created_at >= DATE_ADD(%s, INTERVAL 1 DAY)
-                    AND st_activity.created_at <= DATE_ADD(%s, INTERVAL 90 DAY)
                 WHERE DATE(cp.prediction_date) = DATE(%s)
-                GROUP BY cp.user_id, cp.churn_probability, u.last_login, su_activity.user_id, st_activity.user_id
             """
-            df = pd.read_sql(query, self.engine, params=(
-                                                        reference_date, reference_date, 
-                                                        reference_date, reference_date, 
-                                                        reference_date))
-            
+
+            # Thực hiện query cơ bản
+            df = pd.read_sql(base_query, self.engine, params=(
+                reference_date, reference_date,  # recent_activity_count
+                reference_date, reference_date,  # previous_activity_count
+                reference_date, reference_date,  # has_service_after
+                reference_date, reference_date,  # has_support_after
+                reference_date   # WHERE clause
+            ))
+
             if df.empty:
                 raise ValueError(f"Không tìm thấy dữ liệu dự đoán cho ngày {reference_date.strftime('%d/%m/%Y')}")
+
+            # Chuyển đổi last_login thành timezone-aware
+            df['last_login'] = pd.to_datetime(df['last_login'], utc=True)
+            
+            # Tính toán actual_churn trong Python
+            df['had_activity_after'] = (df['has_service_after'] | df['has_support_after']).astype(int)
+            df['activity_ratio'] = df['recent_activity_count'] / df['previous_activity_count'].replace(0, 1)
+            
+            # Đảm bảo reference_date là timezone-aware khi so sánh
+            inactive_threshold = reference_date - pd.Timedelta(days=90)
+            df['is_inactive'] = (df['last_login'] < inactive_threshold).astype(int)
+            df['has_decreased_activity'] = ((df['previous_activity_count'] > 0) & (df['activity_ratio'] < 0.5)).astype(int)
+            
+            # Xác định actual_churn
+            df['actual_churn'] = (
+                ((df['is_inactive'] == 1) | (df['has_decreased_activity'] == 1)) & 
+                (df['had_activity_after'] == 0)
+            ).astype(int)
             
             # Tính toán các metrics
             y_true = df['actual_churn']
             y_pred = (df['churn_probability'] >= 0.8).astype(int)
             
-            metrics = {
+            # Metrics cơ bản để lưu vào database
+            db_metrics = {
                 'accuracy': accuracy_score(y_true, y_pred),
                 'total_users': len(df),
                 'actual_churns': int(y_true.sum()),
@@ -784,28 +850,96 @@ class ChurnPredictionModel:
             
             # Chỉ tính precision và recall nếu có cả hai lớp
             if len(y_true.unique()) > 1:
-                metrics.update({
+                db_metrics.update({
                     'precision': precision_score(y_true, y_pred, zero_division=0),
                     'recall': recall_score(y_true, y_pred, zero_division=0),
                     'f1_score': f1_score(y_true, y_pred, zero_division=0),
                     'roc_auc': roc_auc_score(y_true, df['churn_probability'])
                 })
             else:
-                metrics.update({
+                db_metrics.update({
                     'precision': 0.0,
                     'recall': 0.0,
                     'f1_score': 0.0,
                     'roc_auc': 0.0
                 })
             
-            # Lưu kết quả đánh giá
+            # Lưu kết quả đánh giá vào database
             ModelEvaluation.objects.create(
                 reference_date=reference_date,
                 evaluation_date=evaluation_date,
-                **metrics
+                **db_metrics
             )
             
-            return metrics
+            # Thêm thông tin bổ sung vào metrics trả về
+            metrics = db_metrics.copy()
+            metrics.update({
+                'inactive_users': int(df['is_inactive'].sum()),
+                'decreased_activity_users': int(df['has_decreased_activity'].sum()),
+                'had_activity_after': int(df['had_activity_after'].sum())
+            })
             
+            return metrics
+
         except Exception as e:
             raise ValueError(f"Lỗi khi đánh giá mô hình: {str(e)}")
+
+    def get_data_statistics(self, reference_date=None):
+        """Phân tích dữ liệu trước khi huấn luyện
+        
+        Args:
+            reference_date: Ngày tham chiếu để xác định churn
+            
+        Returns:
+            dict: Dictionary chứa các thống kê về dữ liệu
+        """
+        df = self._load_and_prepare_data(reference_date)
+        if df.empty:
+            raise ValueError("Không có đủ dữ liệu để phân tích")
+        
+        X = df.drop(columns=['user_id', 'churned'])
+        y = df['churned'].astype(int)
+        
+        # Thống kê cơ bản về phân phối lớp
+        class_counts = y.value_counts()
+        total_samples = int(len(y))  # Convert to Python int
+        
+        # Convert class_counts to Python dict with int values
+        class_distribution = {str(k): int(v) for k, v in class_counts.items()}
+        
+        # Tính toán tỷ lệ mất cân bằng
+        imbalance_ratio = float(class_counts.get(0, 0) / class_counts.get(1, 1)) if class_counts.get(1, 0) > 0 else float('inf')
+        
+        # Thống kê về features
+        feature_stats = {}
+        for column in X.columns:
+            stats = X[column].describe()
+            feature_stats[column] = {
+                'mean': float(stats['mean']),
+                'std': float(stats['std']),
+                'min': float(stats['min']),
+                'max': float(stats['max']),
+                'missing': int(X[column].isnull().sum())
+            }
+        
+        # Tính toán số lượng mẫu synthetic cần tạo với các tỷ lệ SMOTE khác nhau
+        smote_scenarios = {}
+        for ratio in [0.3, 0.5, 0.7, 1.0]:
+            target_samples = int(class_counts.get(0, 0) * ratio)
+            synthetic_samples = target_samples - int(class_counts.get(1, 0))
+            if synthetic_samples < 0:
+                synthetic_samples = 0
+            smote_scenarios[str(ratio)] = {
+                'target_samples': target_samples,
+                'synthetic_samples': synthetic_samples,
+                'final_ratio': float((class_counts.get(1, 0) + synthetic_samples) / class_counts.get(0, 0))
+            }
+        
+        return {
+            'total_samples': total_samples,
+            'class_distribution': class_distribution,
+            'imbalance_ratio': imbalance_ratio,
+            'feature_statistics': feature_stats,
+            'smote_scenarios': smote_scenarios,
+            'reference_date': reference_date.strftime('%Y-%m-%d') if reference_date else None
+        }

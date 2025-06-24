@@ -1,0 +1,176 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="{% static 'admin/css/changelists.css' %}">
+<style>
+    .filter-box {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .filter-box select, .filter-box input {
+        margin-right: 10px;
+        padding: 5px;
+    }
+    .customer-list {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .customer-list th {
+        background: #f8f9fa;
+        padding: 10px;
+        text-align: left;
+    }
+    .customer-list td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    .risk-high {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .risk-medium {
+        color: #ffc107;
+        font-weight: bold;
+    }
+    .risk-low {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .pagination {
+        margin-top: 20px;
+        text-align: center;
+    }
+    .pagination a {
+        padding: 5px 10px;
+        margin: 0 5px;
+        border: 1px solid #ddd;
+        text-decoration: none;
+    }
+    .pagination .current {
+        background: #007bff;
+        color: white;
+        padding: 5px 10px;
+        margin: 0 5px;
+        border: 1px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+
+    <!-- Filter Box -->
+    <div class="filter-box">
+        <form method="get">
+            <input type="text" name="search" placeholder="Search by username or email" value="{{ current_filters.search }}">
+            
+            <select name="service_plan">
+                <option value="">All Service Plans</option>
+                {% for plan in service_plans %}
+                <option value="{{ plan }}" {% if plan == current_filters.service_plan %}selected{% endif %}>
+                    {{ plan }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="churn_risk">
+                <option value="">All Risk Levels</option>
+                <option value="high" {% if current_filters.churn_risk == 'high' %}selected{% endif %}>High Risk (>70%)</option>
+                <option value="medium" {% if current_filters.churn_risk == 'medium' %}selected{% endif %}>Medium Risk (30-70%)</option>
+                <option value="low" {% if current_filters.churn_risk == 'low' %}selected{% endif %}>Low Risk (<30%)</option>
+            </select>
+
+            <select name="sort_by">
+                <option value="-churn_probability" {% if current_filters.sort_by == '-churn_probability' %}selected{% endif %}>Sort by Risk (High to Low)</option>
+                <option value="username" {% if current_filters.sort_by == 'username' %}selected{% endif %}>Sort by Username</option>
+                <option value="total_spent" {% if current_filters.sort_by == 'total_spent' %}selected{% endif %}>Sort by Total Spent</option>
+                <option value="last_activity" {% if current_filters.sort_by == 'last_activity' %}selected{% endif %}>Sort by Last Activity</option>
+            </select>
+
+            <button type="submit" class="button">Apply Filters</button>
+            <a href="?" class="button">Reset</a>
+        </form>
+    </div>
+
+    <!-- Customer List -->
+    <table class="customer-list">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Churn Risk</th>
+                <th>Active Services</th>
+                <th>Total Spent</th>
+                <th>Avg Rating</th>
+                <th>Last Activity</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td>{{ customer.username }}</td>
+                <td>{{ customer.email }}</td>
+                <td class="{% if customer.latest_churn_prob >= 70 %}risk-high{% elif customer.latest_churn_prob >= 30 %}risk-medium{% else %}risk-low{% endif %}">
+                    {{ customer.latest_churn_prob|floatformat:1 }}%
+                </td>
+                <td>{{ customer.active_services }}</td>
+                <td>{{ customer.total_spent|floatformat:0 }} VND</td>
+                <td>{{ customer.avg_rating|floatformat:1 }}/5.0</td>
+                <td>{{ customer.last_activity|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="{% url 'admin:churn_prediction_churnprediction_customer_detail' customer.id %}" 
+                       class="button">View Details</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">No customers found matching the criteria.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    {% if customers.has_other_pages %}
+    <div class="pagination">
+        {% if customers.has_previous %}
+            <a href="?page=1{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}
+                      {% if current_filters.service_plan %}&service_plan={{ current_filters.service_plan }}{% endif %}
+                      {% if current_filters.churn_risk %}&churn_risk={{ current_filters.churn_risk }}{% endif %}
+                      {% if current_filters.sort_by %}&sort_by={{ current_filters.sort_by }}{% endif %}">&laquo; First</a>
+            <a href="?page={{ customers.previous_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}
+                      {% if current_filters.service_plan %}&service_plan={{ current_filters.service_plan }}{% endif %}
+                      {% if current_filters.churn_risk %}&churn_risk={{ current_filters.churn_risk }}{% endif %}
+                      {% if current_filters.sort_by %}&sort_by={{ current_filters.sort_by }}{% endif %}">Previous</a>
+        {% endif %}
+
+        {% for num in customers.paginator.page_range %}
+            {% if customers.number == num %}
+                <span class="current">{{ num }}</span>
+            {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                <a href="?page={{ num }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}
+                          {% if current_filters.service_plan %}&service_plan={{ current_filters.service_plan }}{% endif %}
+                          {% if current_filters.churn_risk %}&churn_risk={{ current_filters.churn_risk }}{% endif %}
+                          {% if current_filters.sort_by %}&sort_by={{ current_filters.sort_by }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if customers.has_next %}
+            <a href="?page={{ customers.next_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}
+                      {% if current_filters.service_plan %}&service_plan={{ current_filters.service_plan }}{% endif %}
+                      {% if current_filters.churn_risk %}&churn_risk={{ current_filters.churn_risk }}{% endif %}
+                      {% if current_filters.sort_by %}&sort_by={{ current_filters.sort_by }}{% endif %}">Next</a>
+            <a href="?page={{ customers.paginator.num_pages }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}
+                      {% if current_filters.service_plan %}&service_plan={{ current_filters.service_plan }}{% endif %}
+                      {% if current_filters.churn_risk %}&churn_risk={{ current_filters.churn_risk }}{% endif %}
+                      {% if current_filters.sort_by %}&sort_by={{ current_filters.sort_by }}{% endif %}">Last &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

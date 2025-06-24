@@ -1,0 +1,195 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+<style>
+    /* Tùy chỉnh form chi tiết */
+    #content {
+        padding: 20px;
+    }
+    
+    .form-row {
+        padding: 15px;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    
+    .form-row:last-child {
+        border-bottom: none;
+    }
+    
+    .form-row label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .module {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+        background: white;
+    }
+    
+    .module h2 {
+        background: linear-gradient(135deg, #4568dc, #b06ab3);
+        color: white;
+        padding: 15px;
+        margin: 0;
+        font-size: 16px;
+    }
+    
+    fieldset.module {
+        padding: 0;
+    }
+    
+    .aligned label {
+        width: 150px;
+        word-wrap: break-word;
+    }
+    
+    input, textarea, select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: 'Roboto', sans-serif;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+        border-color: #4568dc;
+        box-shadow: 0 0 0 2px rgba(69,104,220,0.2);
+        outline: none;
+    }
+    
+    .submit-row {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    
+    .submit-row input {
+        background: linear-gradient(135deg, #4568dc, #b06ab3);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        margin-left: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .submit-row input:hover {
+        box-shadow: 0 2px 10px rgba(69, 104, 220, 0.3);
+    }
+    
+    .delete-link {
+        background: #e74c3c !important;
+    }
+    
+    /* Tùy chỉnh trang xem trước */
+    .plan-details-container {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    
+    /* Tiêu đề trang đẹp hơn */
+    #content h1 {
+        background: linear-gradient(135deg, #4568dc, #b06ab3);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        margin-bottom: 20px;
+        font-size: 28px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+    }
+    
+    /* Tùy chỉnh cho phần thông tin liên quan */
+    .plan-related-info {
+        margin-top: 30px;
+        max-width: 600px;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    
+    .info-card-header {
+        background: linear-gradient(135deg, #4568dc, #b06ab3);
+        color: white;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .info-card-body {
+        padding: 15px;
+    }
+    
+    .info-card-body ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .info-card-body li {
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    
+    .info-card-body li:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content_title %}
+{% if add %}
+<h1>{% trans 'Thêm gói cước mới' %}</h1>
+{% else %}
+<h1>{% trans 'Chi tiết gói cước' %} "{{ original.name }}"</h1>
+{% endif %}
+{% endblock %}
+
+{% block after_field_sets %}
+{% if not add and original %}
+<div class="plan-related-info">
+    <div class="info-card">
+        <div class="info-card-header">
+            <i class="fas fa-tags"></i> Khuyến mãi áp dụng
+        </div>
+        <div class="info-card-body">
+            <ul>
+                {% if original.promotions.all %}
+                    {% for promo in original.promotions.all %}
+                        <li>
+                            <i class="fas fa-tag"></i> {{ promo.title }} - 
+                            <span style="color: #28a745;">Giảm {{ promo.discount_percentage }}%</span>
+                            {% if promo.is_active %}
+                                <span style="color: green;">(Đang hoạt động)</span>
+                            {% else %}
+                                <span style="color: red;">(Hết hiệu lực)</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li><em>Chưa có khuyến mãi nào áp dụng cho gói cước này</em></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

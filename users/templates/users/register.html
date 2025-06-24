@@ -4,53 +4,75 @@
 {% block title %}Đăng ký{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8 col-sm-12">
-            <div class="card shadow-lg rounded-4 border-0">
-                <div class="card-header bg-viettel text-white py-4 px-5 rounded-top-4 text-center">
-                    <h2 class="mb-0 fw-bold">Đăng ký tài khoản</h2>
-                </div>
-                <div class="card-body p-5">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="register-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8 col-sm-12">
+                <div class="card register-card shadow-lg border-0 animate__animated animate__fadeIn">
+                    <div class="register-header card-header text-white py-4 px-5 text-center">
+                        <h2 class="mb-0 fw-bold">
+                            <i class="bi bi-person-plus-fill me-2"></i>
+                            Đăng ký tài khoản
+                        </h2>
+                        <p class="mb-0 mt-2 text-white-50">Tạo tài khoản để trải nghiệm dịch vụ của chúng tôi</p>
+                    </div>
+                    <div class="card-body p-5">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    <i class="bi {% if message.tags == 'success' %}bi-check-circle{% else %}bi-exclamation-circle{% endif %} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        <form method="post" class="needs-validation" novalidate id="register-form">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="form-floating mb-4">
+                                    {{ field }}
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {% if field.help_text %}
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            {{ field.help_text }}
+                                        </div>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <div class="text-danger small mt-2">
+                                            {% for error in field.errors %}
+                                                <div>
+                                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    {% if field.id_for_label == "id_password1" or field.id_for_label == "id_password2" %}
+                                        <i class="bi bi-eye password-toggle" id="toggle-{{ field.id_for_label }}" onclick="togglePassword('{{ field.id_for_label }}', this)"></i>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+
+                            <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar" id="form-progress" style="width: 0%"></div>
                             </div>
-                        {% endfor %}
-                    {% endif %}
-                    <form method="post" class="needs-validation" novalidate id="register-form">
-                        {% csrf_token %}
-                        {% for field in form %}
-                            <div class="mb-4">
-                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text }}</div>
-                                {% endif %}
-                                {% if field.errors %}
-                                    <div class="text-danger small">
-                                        {% for error in field.errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                {% if field.id_for_label == "id_password1" or field.id_for_label == "id_password2" %}
-                                    <div class="form-check mt-2">
-                                        <input class="form-check-input" type="checkbox" id="show-{{ field.id_for_label }}" onchange="togglePassword('{{ field.id_for_label }}')">
-                                        <label class="form-check-label" for="show-{{ field.id_for_label }}">Hiển thị mật khẩu</label>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        <div class="progress mb-4" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar" id="form-progress" style="width: 0%"></div>
+
+                            <button type="submit" class="btn btn-viettel register-btn w-100">
+                                <i class="bi bi-person-plus me-2"></i>
+                                Đăng ký
+                            </button>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <p class="mb-0">
+                                Đã có tài khoản? 
+                                <a href="{% url 'login' %}" class="login-link">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i>
+                                    Đăng nhập
+                                </a>
+                            </p>
                         </div>
-                        <button type="submit" class="btn btn-viettel w-100 py-3">Đăng ký</button>
-                    </form>
-                    <div class="text-center mt-4">
-                        <p>Đã có tài khoản? <a href="{% url 'login' %}" class="text-viettel">Đăng nhập</a></p>
                     </div>
                 </div>
             </div>
@@ -65,47 +87,87 @@
         const form = document.getElementById('register-form');
         const progressBar = document.getElementById('form-progress');
         const requiredFields = form.querySelectorAll('[required]');
+        const submitButton = form.querySelector('button[type="submit"]');
 
         function updateProgress() {
             let filledCount = 0;
+            let totalFields = requiredFields.length;
+            
             requiredFields.forEach(field => {
                 if (field.value.trim() !== '') {
                     filledCount++;
                 }
             });
-            const progress = requiredFields.length > 0 ? (filledCount / requiredFields.length) * 100 : 100;
+
+            const progress = (filledCount / totalFields) * 100;
             progressBar.style.width = progress + '%';
             progressBar.setAttribute('aria-valuenow', progress);
+
+            // Thêm hiệu ứng cho nút submit
+            if (progress === 100) {
+                submitButton.classList.add('animate__animated', 'animate__pulse');
+                submitButton.style.transform = 'scale(1.02)';
+            } else {
+                submitButton.classList.remove('animate__animated', 'animate__pulse');
+                submitButton.style.transform = 'scale(1)';
+            }
         }
 
+        // Cập nhật progress khi load trang
         updateProgress();
+
+        // Cập nhật progress khi nhập liệu
         requiredFields.forEach(field => {
             field.addEventListener('input', updateProgress);
         });
 
+        // Xử lý form submit
         form.addEventListener('submit', function(event) {
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
+                
+                // Hiển thị animation cho các trường lỗi
+                form.querySelectorAll(':invalid').forEach(field => {
+                    field.parentElement.classList.add('animate__animated', 'animate__shakeX');
+                    setTimeout(() => {
+                        field.parentElement.classList.remove('animate__animated', 'animate__shakeX');
+                    }, 1000);
+                });
             }
             form.classList.add('was-validated');
         });
 
-        const firstField = form.querySelector('input:not([type="hidden"]), select, textarea');
+        // Auto focus vào trường đầu tiên
+        const firstField = form.querySelector('input:not([type="hidden"])');
         if (firstField) {
             setTimeout(() => {
                 firstField.focus();
             }, 500);
         }
+
+        // Thêm hiệu ứng hover cho các input
+        form.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
     });
 
-    function togglePassword(fieldId) {
+    function togglePassword(fieldId, icon) {
         const passwordField = document.getElementById(fieldId);
-        const checkbox = document.getElementById('show-' + fieldId);
-        if (checkbox.checked) {
+        if (passwordField.type === 'password') {
             passwordField.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
         } else {
             passwordField.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
         }
     }
 </script>

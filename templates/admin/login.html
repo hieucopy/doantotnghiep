@@ -132,13 +132,5 @@
 {% endblock %}
 
 {% block content %}
-<div class="login-logo">
-    <img src="{% static 'images/logo.svg' %}" alt="MyICT Telecom Logo">
-</div>
-
 {{ block.super }}
-
-<div class="password-reset-link">
-    <a href="{% url 'admin_password_reset' %}">{% trans 'Forgotten your password or username?' %}</a>
-</div>
 {% endblock %} 

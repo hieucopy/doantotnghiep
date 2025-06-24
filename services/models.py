@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
 class ServicePlan(models.Model):
@@ -81,7 +81,7 @@ class Promotion(models.Model):
     discount_percentage = models.DecimalField(
         max_digits=5, 
         decimal_places=2, 
-        validators=[MinValueValidator(0), MinValueValidator(100)],  # Giảm giá từ 0-100%
+        validators=[MinValueValidator(0), MaxValueValidator(100)],  # Giảm giá từ 0-100%
     )  # Phần trăm giảm giá
     start_date = models.DateTimeField()  # Thời gian bắt đầu
     end_date = models.DateTimeField()  # Thời gian kết thúc
@@ -94,6 +94,7 @@ class Promotion(models.Model):
 
     class Meta:
         ordering = ['-start_date']  # Sắp xếp theo ngày bắt đầu mới nhất
+
 class UserAccount(models.Model):
     user = models.OneToOneField('users.CustomUser', on_delete=models.CASCADE, related_name='account')
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, validators=[MinValueValidator(0)])

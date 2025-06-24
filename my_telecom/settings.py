@@ -135,3 +135,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # Thay thế bằng email của bạn
+EMAIL_HOST_PASSWORD = 'your-app-password'  # Thay thế bằng mật khẩu ứng dụng
+
+# Tăng giới hạn số lượng trường dữ liệu trong request
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 40000  # Hoặc một số lớn hơn tùy vào nhu cầu

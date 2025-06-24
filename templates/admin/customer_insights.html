@@ -24,63 +24,6 @@
         margin-bottom: 0.5rem;
     }
 
-    .search-section {
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .search-form {
-        display: flex;
-        gap: 1rem;
-        align-items: flex-end;
-    }
-
-    .form-group {
-        flex: 1;
-        max-width: 300px;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-
-    .form-group input, .form-group select {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-        transition: all 0.3s;
-    }
-
-    .form-group input:focus, .form-group select:focus {
-        outline: none;
-        border-color: #3498db;
-        box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
-    }
-
-    .search-btn {
-        background: #3498db;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 4px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .search-btn:hover {
-        background: #2980b9;
-        transform: translateY(-1px);
-    }
-
     .customer-info {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -155,59 +98,6 @@
         background: #f8f9fa;
     }
 
-    .churn-factors {
-        margin-top: 2rem;
-    }
-
-    .factor-list {
-        display: grid;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-
-    .factor-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .factor-icon {
-        width: 40px;
-        height: 40px;
-        background: #e3f2fd;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #3498db;
-        font-size: 1.25rem;
-    }
-
-    .factor-content {
-        flex: 1;
-    }
-
-    .factor-content h4 {
-        margin: 0;
-        color: #2c3e50;
-        font-size: 1.1rem;
-    }
-
-    .factor-content p {
-        margin: 0.25rem 0 0;
-        color: #666;
-        font-size: 0.9rem;
-    }
-
-    .factor-impact {
-        font-weight: 600;
-        color: #e74c3c;
-    }
-
     .back-link {
         display: inline-block;
         margin-top: 1rem;
@@ -277,15 +167,6 @@
             padding: 1rem;
         }
 
-        .search-form {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .form-group {
-            max-width: none;
-        }
-
         .customer-info {
             grid-template-columns: 1fr;
         }
@@ -302,7 +183,7 @@
 <div class="insights-container">
     <div class="insights-header">
         <h1>Customer Insights</h1>
-        <p>Detailed analysis of customer behavior and churn risk factors</p>
+        <p>Detailed analysis of customer behavior </p>
     </div>
 
     {% if messages %}
@@ -312,25 +193,6 @@
             </div>
         {% endfor %}
     {% endif %}
-
-    <div class="search-section">
-        <form method="get" class="search-form">
-            <div class="form-group">
-                <label for="search_type">Search By:</label>
-                <select name="search_type" id="search_type">
-                    <option value="id">User ID</option>
-                    <option value="username">Username</option>
-                    <option value="email">Email</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="search_query">Search Query:</label>
-                <input type="text" name="search_query" id="search_query" 
-                       placeholder="Enter search term" required>
-            </div>
-            <button type="submit" class="search-btn">Search Customer</button>
-        </form>
-    </div>
 
     {% if customer %}
     <div class="customer-info">
@@ -444,7 +306,7 @@
                     <td>{{ usage.data_usage|floatformat:0 }} MB</td>
                     <td>{{ usage.call_minutes|floatformat:0 }} min</td>
                     <td>{{ usage.sms_used }}</td>
-                    <td>{{ usage.amount|floatformat:0 }} VND</td>
+                    <td>{{ usage.spent_amount|floatformat:0 }} VND</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -454,32 +316,9 @@
             </tbody>
         </table>
     </div>
-
-    <div class="churn-factors">
-        <h3>Churn Risk Factors</h3>
-        <div class="factor-list">
-            {% for factor in churn_factors %}
-            <div class="factor-item">
-                <div class="factor-icon">
-                    {% if factor.impact == 'high' %}⚠️
-                    {% elif factor.impact == 'medium' %}⚡
-                    {% else %}ℹ️{% endif %}
-                </div>
-                <div class="factor-content">
-                    <h4>{{ factor.name }}</h4>
-                    <p>{{ factor.description }}</p>
-                </div>
-                <div class="factor-impact">
-                    {{ factor.value }}
-                </div>
-            </div>
-            {% empty %}
-            <p>No significant churn risk factors identified</p>
-            {% endfor %}
-        </div>
-    </div>
     {% endif %}
 
-    <a href="{% url 'admin:index' %}" class="back-link">← Back to Admin Dashboard</a>
+    <a href="{% url 'admin:churn_prediction_churnprediction_customer_list' %}" class="back-link">← Back to Customer List</a>
+    <a href="{% url 'admin:index' %}" class="back-link" style="margin-left: 15px;">← Back to Admin Dashboard</a>
 </div>
 {% endblock %} 

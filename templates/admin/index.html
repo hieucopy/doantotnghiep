@@ -195,15 +195,6 @@
             <div class="card-content">
                 <ul class="feature-list">
                     <li class="feature-item">
-                        <i class="fas fa-user-chart"></i>
-                        <a href="{% url 'admin:churn_prediction_churnprediction_customer_insights' %}" class="feature-link">
-                            {% trans 'Customer Insights' %}
-                            <div class="feature-description">
-                                {% trans 'Detailed analysis of customer behavior and churn risk factors' %}
-                            </div>
-                        </a>
-                    </li>
-                    <li class="feature-item">
                         <i class="fas fa-brain"></i>
                         <a href="{% url 'admin:churn_prediction_churnprediction_model_insights' %}" class="feature-link">
                             {% trans 'Model Insights' %}
@@ -218,14 +209,14 @@
 
         <div class="dashboard-card">
             <div class="card-header">
-                <i class="fas fa-cogs"></i>
+                <i class="fas fa-user-minus"></i>
                 <h2>{% trans 'Churn Prediction' %}</h2>
             </div>
             <div class="card-content">
                 <ul class="feature-list">
                     <li class="feature-item">
                         <i class="fas fa-search"></i>
-                        <a href="{% url 'admin:churn_prediction_churnprediction_predict' %}" class="feature-link">
+                        <a href="{% url 'admin:churn_prediction_churnprediction_customer_list' %}" class="feature-link">
                             {% trans 'Predict Churn' %}
                             <div class="feature-description">
                                 {% trans 'Analyze churn risk for specific customers' %}
@@ -233,7 +224,7 @@
                         </a>
                     </li>
                     <li class="feature-item">
-                        <i class="fas fa-robot"></i>
+                        <i class="fas fa-sync"></i>
                         <a href="{% url 'admin:churn_prediction_churnprediction_train' %}" class="feature-link">
                             {% trans 'Train Model' %}
                             <div class="feature-description">
@@ -270,8 +261,8 @@
                         <i class="fas fa-users"></i>
                         {% trans 'Manage Users' %}
                     </a>
-                    <a href="{% url 'admin:services_serviceusage_changelist' %}" class="action-button">
-                        <i class="fas fa-mobile-alt"></i>
+                    <a href="{% url 'admin:services_serviceplan_changelist' %}" class="action-button">
+                        <i class="fas fa-cogs"></i>
                         {% trans 'View Services' %}
                     </a>
                 </div>
